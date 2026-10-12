@@ -200,20 +200,28 @@ function smart(){
 }
 
 let spPart=2,spIdx=0,tmr=null;
-/* ===== Dictée : reconnaissance vocale du navigateur (Chrome, Edge, Safari), en allemand.
-   Absente, refusée (ex. artifact sans accès au micro) ou sans micro : les boutons .mic se cachent. ===== */
+/* ===== Dictée en allemand, deux modes. Les boutons micro ne disparaissent jamais.
+   - apiMic : reconnaissance vocale du navigateur (Chrome, Edge, Safari), transcription en direct ;
+   - sinon (appli installée sur iPhone, artifact sans micro, Firefox, micro refusé) : le bouton 🎙️ ouvre
+     le champ de texte et explique comment dicter avec le micro du clavier ou du système (KBD). ===== */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let rec=null,micOff=!SR;
-const MICERR={"not-allowed":"Le micro n'est pas autorisé ici. Autorise-le dans le navigateur, ou ouvre l'appli dans Chrome, Edge ou Safari.",
-  "service-not-allowed":"La dictée n'est pas autorisée dans cette vue. Ouvre l'appli dans Chrome, Edge ou Safari.",
+let rec=null,apiMic=!!SR;
+const UA=navigator.userAgent,IOS=/iphone|ipad|ipod/i.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
+const KBD=IOS?"Touche le champ de texte, puis le micro 🎤 du clavier, et parle allemand. Si le texte sort en français, passe au clavier allemand avec 🌐 (à ajouter une fois : Réglages → Général → Clavier → Claviers)."
+  :/android/i.test(UA)?"Touche le champ de texte, puis le micro 🎤 du clavier, et parle allemand. Si le texte sort en français, ajoute l'allemand aux langues du clavier (Gboard : ⚙️ → Langues)."
+  :/Mac/.test(UA)?"Clique dans le champ de texte et lance la dictée du Mac (touche 🎤 ou Fn deux fois), réglée en allemand."
+  :/Win/.test(UA)?"Clique dans le champ de texte et lance la dictée de Windows (⊞ Win + H), réglée en allemand."
+  :"Clique dans le champ de texte et utilise la dictée de ton appareil, réglée en allemand.";
+const MICERR={"not-allowed":"La dictée intégrée n'a pas accès au micro ici.",
+  "service-not-allowed":"La dictée intégrée n'est pas disponible ici.",
   "audio-capture":"Aucun micro détecté sur cet appareil.","no-speech":"Je n'ai rien entendu. Rapproche-toi du micro et réessaie.",
   "network":"La dictée a besoin d'une connexion internet."};
-function listen({continuous,onText,onEnd,onErr}){if(micOff)return false;stopListen();try{speechSynthesis.cancel()}catch(e){}
+function listen({continuous,onText,onEnd,onErr}){if(!apiMic)return false;stopListen();try{speechSynthesis.cancel()}catch(e){}
   let fin="";const r=new SR();r.lang="de-DE";r.interimResults=true;r.continuous=!!continuous;
   const clean=t=>t.replace(/\s+/g," ").trim();
   r.onresult=e=>{let tmp="";for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript+" ";else tmp+=x[0].transcript}onText&&onText(clean(fin+tmp))};
-  r.onerror=e=>{if(e.error==="aborted")return;if(/not-allowed|audio-capture/.test(e.error)){micOff=true;$$(".mic").forEach(b=>b.hidden=true)}
-    onErr&&onErr(MICERR[e.error]||"La dictée s'est arrêtée. Réessaie.")};
+  r.onerror=e=>{if(e.error==="aborted")return;if(/not-allowed|audio-capture/.test(e.error))apiMic=false; // la suite passe au clavier
+    onErr&&onErr((MICERR[e.error]||"La dictée s'est arrêtée. Réessaie.")+(apiMic?"":" "+KBD))};
   r.onend=()=>{if(rec===r)rec=null;onEnd&&onEnd(clean(fin))};
   try{r.start();rec=r;return true}catch(e){return false}}
 function stopListen(){if(rec){const r=rec;rec=null;try{r.stop()}catch(e){}}}
@@ -227,14 +235,15 @@ function sprechen(){
    ${spTabs}
    <div class="label">${P.title} · ${P.max} Punkte</div><div class="sign">${esc(it.p)}</div>${it.hint?`<p class="instr">${esc(it.hint)}</p>`:""}
    <div><button class="btn help" id="help">🇫🇷 Hilfe</button><p class="fr" id="frT" hidden>${esc(it.fr)}</p></div>
-   <div class="row"><span class="timer" id="t">0:30</span><button class="btn mark" id="go">${micOff?"":"🎙️ "}Laut sprechen (30 s)</button></div>
-   ${micOff?"":`<p class="small mic" style="margin:0">Le micro transcrit ce que tu dis pendant les 30 secondes : tu pourras ensuite le faire corriger par Claude.</p>`}
+   <div class="row"><span class="timer" id="t">0:30</span><button class="btn mark" id="go">${apiMic?"🎙️ ":""}Laut sprechen (30 s)</button></div>
+   <p class="small" style="margin:0">${apiMic?"Le micro transcrit ce que tu dis pendant les 30 secondes : tu pourras ensuite le faire corriger par Claude.":"Pour faire corriger ta réponse orale : « 🎙️ Dicter » plus bas, avec le micro de ton clavier."}</p>
    <p class="liveTx" id="spLive" hidden></p><p class="status" id="micMsg" hidden></p>
    <div id="m"></div>
    <div class="row"><button class="btn ghost" id="show">Musterlösung</button></div>
-   <details class="aiWrap" id="spWrap"><summary>${micOff?"✍️ Écrire":"✍️ Écrire ou 🎙️ dicter"} ma réponse et la faire corriger par Claude</summary>
-    <textarea id="spTxt" style="min-height:90px" placeholder="Écris${micOff?"":" ou dicte"} ici ce que tu dirais, en allemand…"></textarea>
-    <div class="row"><button class="btn" id="spAi">Faire corriger</button>${micOff?"":`<button class="btn ghost mic" id="spMic">🎙️ Dicter</button>`}</div><div id="spOut"></div></details></div>`;
+   <details class="aiWrap" id="spWrap"><summary>✍️ Écrire ou 🎙️ dicter ma réponse et la faire corriger par Claude</summary>
+    <textarea id="spTxt" lang="de" style="min-height:90px" placeholder="Écris ou dicte ici ce que tu dirais, en allemand…"></textarea>
+    <div class="row"><button class="btn" id="spAi">Faire corriger</button><button class="btn ghost mic" id="spMic">🎙️ Dicter</button></div>
+    <p class="small" id="spKbd" hidden></p><div id="spOut"></div></details></div>`;
   const card=$("#panel").firstElementChild,alive=()=>card.isConnected; // ignore une dictée qui finit après un changement de carte
   const msg=t=>{if(!alive())return;const m=$("#micMsg");m.hidden=!t;m.textContent=t||""};
   const live=t=>{if(!alive())return;const l=$("#spLive");l.hidden=false;l.textContent=t};
@@ -249,11 +258,14 @@ function sprechen(){
     $("#show").textContent="🔊 Muster anhören";$("#show").onclick=()=>speak(it.m.replace(/Frage:|Antwort:|–/g,""));
     $$("[data-r]").forEach(b=>b.onclick=()=>{record("S",+b.dataset.r);spIdx++;sprechen()})};
   $("#show").onclick=reveal;
-  const mic=$("#spMic");
-  if(mic)mic.onclick=()=>{if(mic.classList.contains("rec")){stopListen();return}
+  const mic=$("#spMic"),tip=t=>{if(!alive())return;const k=$("#spKbd");k.hidden=false;k.textContent=t};
+  const viaKbd=()=>{tip(KBD);$("#spTxt").focus()}; // le focus ouvre le clavier du téléphone
+  mic.onclick=()=>{if(mic.classList.contains("rec")){stopListen();return}
+    if(!apiMic)return viaKbd();
     const base=$("#spTxt").value.trim(),done=()=>{mic.classList.remove("rec");mic.textContent="🎙️ Dicter"};
     if(listen({continuous:true,onText:t=>{if(alive())$("#spTxt").value=(base?base+" ":"")+t},
-      onErr:t=>{done();if(alive())$("#spOut").innerHTML=`<div class="ai-box"><span class="small">${esc(t)}</span></div>`},onEnd:done})){mic.classList.add("rec");mic.textContent="⏹ Stop"}};
+      onErr:t=>{done();tip(t)},onEnd:done})){mic.classList.add("rec");mic.textContent="⏹ Stop";$("#spKbd").hidden=true}
+    else viaKbd()};
 }
 
 /* Schreiben: reusable renderers + graders */
@@ -456,10 +468,10 @@ Der Lerner duzt dich, du duzt ihn.`;
 function gespraech(tabs){
   $("#panel").innerHTML=`<div class="card">${tabs}
    <div class="label">Gesprächspartner · Claude</div>
-   <p class="small" style="margin:0">Claude te pose des questions simples sur un thème, comme à l'oral. Il corrige tes fautes au passage et lit ses réponses à voix haute.${micOff?"":" Appuie sur 🎙️ pour lui répondre à voix haute : ta phrase part dès que tu as fini."}</p>
+   <p class="small" style="margin:0">Claude te pose des questions simples sur un thème, comme à l'oral. Il corrige tes fautes au passage et lit ses réponses à voix haute.${apiMic?" Appuie sur 🎙️ pour lui répondre à voix haute : ta phrase part dès que tu as fini.":" Pour lui répondre à voix haute, appuie sur 🎙️ : tu dicteras avec le micro de ton clavier."}</p>
    <div class="chips">${THEMEN.map(t=>`<button class="chipbtn" data-thema="${esc(t)}" aria-pressed="${t===chat.thema}">${esc(t)}</button>`).join("")}</div>
    <div class="chat" id="chat" aria-live="polite"></div>
-   <form class="chatIn" id="chatForm"><input id="chatTxt" autocomplete="off" placeholder="Antworte auf Deutsch…" aria-label="Ta réponse">${micOff?"":`<button type="button" class="btn ghost mic" id="chatMic" aria-label="Répondre à voix haute" title="Répondre à voix haute">🎙️</button>`}<button class="btn" id="chatSend">Senden</button></form>
+   <form class="chatIn" id="chatForm"><input id="chatTxt" lang="de" autocomplete="off" placeholder="Antworte auf Deutsch…" aria-label="Ta réponse"><button type="button" class="btn ghost mic" id="chatMic" aria-label="Répondre à voix haute" title="Répondre à voix haute">🎙️</button><button class="btn" id="chatSend">Senden</button></form>
    <div class="row"><button class="btn ghost" id="chatNew">${chat.turns.length?"Neues Gespräch":"Gespräch starten"}</button><button class="btn ghost" id="chatStop" hidden>Stopp</button></div>
    <p class="status" id="chatStatus" hidden></p></div>`;
   renderChat();
@@ -467,12 +479,15 @@ function gespraech(tabs){
   $("#chatNew").onclick=()=>{chat.turns=[];renderChat();chatSend(null)};
   $("#chatStop").onclick=()=>chat.ctl&&chat.ctl.abort();
   $("#chatForm").addEventListener("submit",e=>{e.preventDefault();const v=$("#chatTxt").value.trim();if(!v||chat.busy)return;$("#chatTxt").value="";chatSend(v)});
-  const cm=$("#chatMic");
-  if(cm)cm.onclick=()=>{if(cm.classList.contains("rec")){stopListen();return}
-    const out=$("#chatStatus"),reset=()=>{cm.classList.remove("rec");cm.textContent="🎙️"};
+  const cm=$("#chatMic"),out=$("#chatStatus"),say=t=>{if(cm.isConnected){out.hidden=false;out.textContent=t}};
+  const viaKbd=()=>{say(KBD);$("#chatTxt").focus()};
+  cm.onclick=()=>{if(cm.classList.contains("rec")){stopListen();return}
+    if(!apiMic)return viaKbd();
+    const reset=()=>{cm.classList.remove("rec");cm.textContent="🎙️"};
     if(listen({continuous:false,onText:t=>{if(cm.isConnected)$("#chatTxt").value=t},
-      onErr:t=>{reset();if(cm.isConnected){out.hidden=false;out.textContent=t}},
-      onEnd:t=>{reset();if(t&&cm.isConnected&&!chat.busy)$("#chatForm").requestSubmit()}})){cm.classList.add("rec");cm.textContent="⏹";out.hidden=true}};
+      onErr:t=>{reset();say(t)},
+      onEnd:t=>{reset();if(t&&cm.isConnected&&!chat.busy)$("#chatForm").requestSubmit()}})){cm.classList.add("rec");cm.textContent="⏹";out.hidden=true}
+    else viaKbd()};
 }
 function bubHtml(t){if(t.role==="user")return `<div class="bub me">${esc(t.content)}</div>`;
   const m=t.content.match(/^\s*Korrektur:\s*(.+)\n?([\s\S]*)$/);

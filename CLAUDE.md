@@ -76,8 +76,10 @@ Répétition espacée : `record()` met à jour la boîte puis `schedule()` fixe 
 jours (0, 1, 3, 7, 14), au plus tard la veille de l'examen. `pick()` et `vPick()` passent par `srsFirst()` :
 révisions dues, puis notions jamais vues, puis avance sur le programme.
 
-Dictée : `listen()` / `stopListen()` (SpeechRecognition du navigateur, `de-DE`). Tout bouton de micro porte la
-classe `mic` : il est caché quand la dictée est absente ou refusée. Ne jamais rendre une fonction dépendante du micro.
+Dictée : `listen()` / `stopListen()` (SpeechRecognition du navigateur, `de-DE`) quand `apiMic` est vrai. Sinon
+(appli installée sur iPhone, artifact sans micro, Firefox, micro refusé) les boutons 🎙️ restent visibles et
+passent en mode clavier : focus sur le champ + aide `KBD` pour dicter avec le micro du clavier ou du système.
+Ne jamais cacher un bouton micro, ni rendre une fonction dépendante de la dictée intégrée.
 
 ## Fonctions liées à claude.ai
 
