@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Start Deutsch 1 Coach</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="src/styles.css">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="board" id="board">
+    <div class="boardTop"><span class="lineBadge">A1</span><span class="boardTitle">Start Deutsch 1 Coach</span>
+    <details class="settings">
+      <summary>🎨 Design</summary>
+      <div class="setPanel">
+        <div class="label">Couleur de ligne</div>
+        <div class="swatches" id="palettes"></div>
+        <div class="label">Thème</div>
+        <div class="swatches" id="modes"></div>
+      </div>
+    </details></div>
+    <div class="boardRows" id="boardRows" aria-live="polite"></div>
+    <div class="boardMeta"><span>Goethe-Zertifikat <b>A1</b></span><span>Format officiel 2026</span><span>Textes originaux de niveau A1</span></div>
+  </header>
+
+  <section class="meter" aria-label="Niveau de préparation">
+    <div class="meterHead">
+      <div><div class="label">Prüfungsbereit</div><div class="big" id="overall">–</div></div>
+      <div class="verdict" id="verdict">Réponds à quelques questions pour lancer le diagnostic.</div>
+    </div>
+    <div class="bars" id="bars"></div>
+    <div class="examRow"><label for="examDate">Prüfungstermin</label><input type="date" id="examDate"><span id="countdown"></span></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Navigation"><span class="tabInd" id="tabInd"></span>
+    <button class="tab" role="tab" data-tab="heute" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Heute</span></button>
+    <button class="tab" role="tab" data-tab="smart" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg><span>Training</span></button>
+    <button class="tab" role="tab" data-tab="wortschatz" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg><span>Wörter</span></button>
+    <button class="tab" role="tab" data-tab="sprechen" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-6 4z"/></svg><span>Sprechen</span></button>
+    <button class="tab" role="tab" data-tab="schreiben" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg><span>Schreiben</span></button>
+    <button class="tab" role="tab" data-tab="exam" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v3.5a2 2 0 0 0 0 3.5V19H3v-5a2 2 0 0 0 0-3.5z"/><path d="M15 8v10" stroke-dasharray="2 2"/></svg><span>Prüfung</span></button>
+  </nav>
+
+  <main id="panel"></main>
+  <p class="small">La barre verticale de chaque jauge marque 60 %, le seuil de réussite. « Wortschatz » et « Grammatik » ne sont pas des épreuves officielles : ils consolident les bases. Le Wortschatz suit l'organisation de la Wortliste officielle Start Deutsch 1 (thèmes et groupes de mots). Utiliser « Hilfe » compte pour une demi-réponse. Ta progression reste enregistrée dans ce navigateur.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/motion@12.23.12/dist/motion.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="src/data.js"></script>
+<script src="src/app.js"></script>
+<script src="src/pdf.js"></script>
+</body>
+</html>
