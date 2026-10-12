@@ -283,6 +283,40 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .chatIn{display:flex;gap:8px}
 .chatIn input{flex:1;min-width:0;padding:12px 15px;border-radius:15px}
 
+/* ---------- courbe de progression ----------
+   Une couleur fixe par épreuve (H bleu, L orange, W aqua, S jaune), validée daltonisme en clair et en sombre.
+   En clair, orange/aqua/jaune sont sous 3:1 : légende + survol + tableau portent toujours les valeurs. */
+:root{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}}
+:root[data-theme="dark"]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}
+.prog{display:grid;gap:10px}
+.prog>.row b{font:700 19px var(--display);letter-spacing:-.02em}
+.legend{display:flex;gap:6px 16px;flex-wrap:wrap;font:600 13px var(--ui);color:var(--ink)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:16px;height:3px;border-radius:2px;display:block}
+.chartBox{position:relative;min-height:40px}
+.chartBox svg{display:block;width:100%;height:auto;overflow:visible}
+.chartBox .grid{stroke:var(--line);stroke-width:1}
+.chartBox .seuil{stroke:var(--ink);stroke-opacity:.35;stroke-width:1}
+.chartBox .examLine{stroke:var(--ink);stroke-opacity:.5;stroke-width:1}
+.chartBox .ax{font:500 11px var(--ui);fill:var(--muted)}
+.chartBox .endLbl{font:600 12px var(--ui);fill:var(--ink)}
+.chartBox .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chartBox .dot{stroke:var(--surface);stroke-width:2}
+.chartBox .cross{stroke:var(--ink);stroke-opacity:.4;stroke-width:1}
+.chartBox .hit{cursor:crosshair;touch-action:pan-y}
+.tip{position:absolute;top:-6px;z-index:2;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px 11px;
+  font:500 13px var(--ui);box-shadow:0 14px 34px -14px rgba(0,0,0,.45);display:grid;gap:3px;min-width:128px}
+.tip div{display:flex;align-items:center;gap:7px}
+.tip i{width:12px;height:3px;border-radius:2px;display:block}
+.progTbl summary{cursor:pointer}
+#progTbl{overflow-x:auto;margin-top:6px}
+
+/* ---------- micro (dictée) ---------- */
+.btn.rec{background:var(--bad);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 30%,transparent);animation:recPulse 1.4s ease-in-out infinite}
+@keyframes recPulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--bad) 12%,transparent)}}
+.liveTx{margin:0;padding:10px 14px;border-radius:14px;border:1px dashed color-mix(in srgb,var(--brand) 50%,var(--line));font:500 16px/1.45 var(--body);min-height:1.45em}
+
 /* ---------- aides au mouvement ---------- */
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:50;
   background:color-mix(in srgb,var(--ink) 92%,transparent);color:var(--bg);font:600 15px var(--ui);padding:13px 19px;border-radius:999px;
@@ -296,6 +330,7 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 @media (prefers-reduced-motion:reduce){
   .fill,.progress span{transition:none}
   .pulse,.btn.shine::after{animation:none;display:none}
+  .btn.rec{animation:none}
   .opt,.btn,.tab,.mis,.sw,.chipbtn{transition:none}
   .opt:hover:not(:disabled),.btn:hover:not(:disabled),.tab:hover,.mis:hover,.sw:hover,.chipbtn:hover{transform:none}
 }

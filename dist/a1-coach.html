@@ -294,6 +294,40 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .chatIn{display:flex;gap:8px}
 .chatIn input{flex:1;min-width:0;padding:12px 15px;border-radius:15px}
 
+/* ---------- courbe de progression ----------
+   Une couleur fixe par épreuve (H bleu, L orange, W aqua, S jaune), validée daltonisme en clair et en sombre.
+   En clair, orange/aqua/jaune sont sous 3:1 : légende + survol + tableau portent toujours les valeurs. */
+:root{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}}
+:root[data-theme="dark"]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}
+.prog{display:grid;gap:10px}
+.prog>.row b{font:700 19px var(--display);letter-spacing:-.02em}
+.legend{display:flex;gap:6px 16px;flex-wrap:wrap;font:600 13px var(--ui);color:var(--ink)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:16px;height:3px;border-radius:2px;display:block}
+.chartBox{position:relative;min-height:40px}
+.chartBox svg{display:block;width:100%;height:auto;overflow:visible}
+.chartBox .grid{stroke:var(--line);stroke-width:1}
+.chartBox .seuil{stroke:var(--ink);stroke-opacity:.35;stroke-width:1}
+.chartBox .examLine{stroke:var(--ink);stroke-opacity:.5;stroke-width:1}
+.chartBox .ax{font:500 11px var(--ui);fill:var(--muted)}
+.chartBox .endLbl{font:600 12px var(--ui);fill:var(--ink)}
+.chartBox .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chartBox .dot{stroke:var(--surface);stroke-width:2}
+.chartBox .cross{stroke:var(--ink);stroke-opacity:.4;stroke-width:1}
+.chartBox .hit{cursor:crosshair;touch-action:pan-y}
+.tip{position:absolute;top:-6px;z-index:2;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px 11px;
+  font:500 13px var(--ui);box-shadow:0 14px 34px -14px rgba(0,0,0,.45);display:grid;gap:3px;min-width:128px}
+.tip div{display:flex;align-items:center;gap:7px}
+.tip i{width:12px;height:3px;border-radius:2px;display:block}
+.progTbl summary{cursor:pointer}
+#progTbl{overflow-x:auto;margin-top:6px}
+
+/* ---------- micro (dictée) ---------- */
+.btn.rec{background:var(--bad);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 30%,transparent);animation:recPulse 1.4s ease-in-out infinite}
+@keyframes recPulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--bad) 12%,transparent)}}
+.liveTx{margin:0;padding:10px 14px;border-radius:14px;border:1px dashed color-mix(in srgb,var(--brand) 50%,var(--line));font:500 16px/1.45 var(--body);min-height:1.45em}
+
 /* ---------- aides au mouvement ---------- */
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:50;
   background:color-mix(in srgb,var(--ink) 92%,transparent);color:var(--bg);font:600 15px var(--ui);padding:13px 19px;border-radius:999px;
@@ -307,6 +341,7 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 @media (prefers-reduced-motion:reduce){
   .fill,.progress span{transition:none}
   .pulse,.btn.shine::after{animation:none;display:none}
+  .btn.rec{animation:none}
   .opt,.btn,.tab,.mis,.sw,.chipbtn{transition:none}
   .opt:hover:not(:disabled),.btn:hover:not(:disabled),.tab:hover,.mis:hover,.sw:hover,.chipbtn:hover{transform:none}
 }
@@ -836,9 +871,27 @@ function bump(k){const d=todayStr();
   if(st.day[k]===G[k]&&typeof toast==="function"){toast(`Mission ${N[k]} terminée`);confetti(innerWidth/2,90,22)}}
 function streakNow(){if(!st.day)return 0;const yest=new Date(Date.now()-864e5).toLocaleDateString("sv");return st.day.date===todayStr()||st.day.date===yest?st.streak||0:0}
 function record(s,v,id){st.hist.push({s,v});if(st.hist.length>500)st.hist=st.hist.slice(-500);
-  if(id){const b=st.box[id]||0;st.box[id]=v>=1?Math.min(b+1,4):v>0?b:0;
+  if(id){const b=st.box[id]||0;st.box[id]=v>=1?Math.min(b+1,4):v>0?b:0;schedule(id,v);
     if(!id.startsWith("v_")){st.err=st.err||{};if(v<1)st.err[id]=1;else if(st.box[id]>=2)delete st.err[id]}}
-  bump({H:"Q",L:"Q",G:"Q",V:"V",S:"S",W:"W"}[s]||"Q");save();renderMeter()}
+  snapDay();bump({H:"Q",L:"Q",G:"Q",V:"V",S:"S",W:"W"}[s]||"Q");save();renderMeter()}
+
+/* Répétition espacée : un item revient INT[boîte] jours plus tard (raté : aujourd'hui ; aidé : demain),
+   et toujours avant la date d'examen. st.due[id] = "AAAA-MM-JJ". */
+const INT=[0,1,3,7,14];
+const dayPlus=n=>new Date(Date.now()+n*864e5).toLocaleDateString("sv");
+function schedule(id,v){let n=INT[st.box[id]||0];if(v<1)n=Math.min(n,1);
+  const gap=st.exam?dGap(todayStr(),st.exam):null;if(gap!==null&&gap>1)n=Math.min(n,gap-1); // au plus tard la veille
+  st.due=st.due||{};st.due[id]=dayPlus(n)}
+/* dû au jour `day` ; un item vu avant l'arrivée des dates (boîte sans date) est dû tout de suite */
+const dueBy=(id,day)=>st.due&&st.due[id]?st.due[id]<=day:st.box[id]!==undefined;
+const isDue=id=>dueBy(id,todayStr());
+const countDue=(items,day)=>items.filter(x=>dueBy(x.id,day)).length;
+/* ordre de tirage : révisions dues, puis notions jamais vues, puis avance sur le programme */
+function srsFirst(items){const due=items.filter(x=>isDue(x.id));if(due.length)return due;
+  const fresh=items.filter(x=>st.box[x.id]===undefined);return fresh.length?fresh:items}
+/* Courbe de progression : score de chaque épreuve officielle en fin de journée (même calcul que la jauge). */
+function snapDay(){const o={};["H","L","W","S"].forEach(k=>{const a=acc(k);if(a!==null)o[k]=Math.round(a*100)});
+  st.snap=st.snap||{};st.snap[todayStr()]=o;Object.keys(st.snap).sort().slice(0,-180).forEach(d=>delete st.snap[d])}
 
 function renderMeter(){
   const off=["H","L","W","S"];let sum=0,n=0;
@@ -928,7 +981,7 @@ const fmtQ=s=>esc(s).replace(/___/g,'<span class="blank"></span>');
 const teilName=q=>q.p==="G"?"Grammatik":`${SK[q.s]} Teil ${q.p[1]}`;
 
 function qBody(q,training){
-  let h=`<div class="meta"><span class="chip">${teilName(q)}</span><span class="chip">${esc(q.t)}</span>${training?`<span class="chip ${(st.box[q.id]||0)===0&&st.hist.length?"hot":""}">Box ${(st.box[q.id]||0)}/4</span>`:""}</div>`;
+  let h=`<div class="meta"><span class="chip">${teilName(q)}</span><span class="chip">${esc(q.t)}</span>${training?`<span class="chip ${(st.box[q.id]||0)===0&&st.hist.length?"hot":""}">Box ${(st.box[q.id]||0)}/4</span>${isDue(q.id)?'<span class="chip">↻ Révision</span>':""}`:""}</div>`;
   h+=`<p class="instr">${TEIL[q.p].i}</p>`;
   if(q.audio)h+=`<div class="row"><button class="btn mark" id="play">▶ Hören</button><button class="btn ghost" id="rate">${rateLabel()}</button></div>`;
   if(q.mail)h+=`<div class="mail">${esc(q.mail)}</div>`;
@@ -953,6 +1006,7 @@ function pick(pool){
   let r=Math.random()*w.reduce((a,b)=>a+b),si=0;while(si<w.length-1&&r>w[si]){r-=w[si];si++}
   let items=pool.filter(q=>q.s===skills[si]&&!recent.includes(q.id));
   if(!items.length)items=pool.filter(q=>q.s===skills[si]);
+  items=srsFirst(items);
   const min=Math.min(...items.map(q=>st.box[q.id]||0));
   items=items.filter(q=>(st.box[q.id]||0)===min);
   const q=items[Math.random()*items.length|0];
@@ -1062,6 +1116,49 @@ function metroHtml(d){if(d===null||d<1)return"";
   return `<div class="metro" aria-label="Ligne jusqu'à l'examen"><div class="metroLine">${days.map(x=>x.gap?`<div class="stn gap"><i></i><span>…</span></div>`
     :`<div class="stn ${x.i===0?"now":""}">${x.i===0&&!RM?'<span class="pulse"></span>':""}<i></i><span>${lbl(x.i)}</span></div>`).join("")}<div class="stn end"><i></i><span>Prüfung</span></div></div></div>`}
 function daysLeft(){if(!st.exam)return null;return Math.ceil((new Date(st.exam+"T09:00")-new Date())/864e5)}
+/* ===== Courbe de progression (SVG) : une ligne par épreuve, seuil 60 %, date d'examen à droite ===== */
+const PROG=[["H","--s1"],["L","--s2"],["W","--s3"],["S","--s4"]]; // couleur fixe par épreuve (palette validée daltonisme)
+const dGap=(a,b)=>Math.round((new Date(b+"T12:00")-new Date(a+"T12:00"))/864e5);
+const fmtD=s=>{const p=s.split("-");return +p[2]+"/"+(+p[1])};
+function drawProg(box,tbl){if(!box)return;
+  const snap=st.snap||{},days=Object.keys(snap).sort().filter(d=>Object.keys(snap[d]).length),det=tbl&&tbl.closest("details");
+  if(!days.length){box.innerHTML=`<p class="small" style="margin:0">La courbe apparaît dès tes premières réponses en Hören, Lesen, Schreiben ou Sprechen.</p>`;if(det)det.hidden=true;return}
+  if(det)det.hidden=false;
+  const today=todayStr(),first=days[0],exam=st.exam&&st.exam>today?st.exam:null;
+  const end=exam||(dGap(first,today)<6?dayPlus(6-dGap(first,today)):today),span=Math.max(dGap(first,end),1);
+  const W=Math.max(box.clientWidth,260),H=190,wide=W>=460,ml=30,mr=wide&&!exam?100:12,mt=14,mb=24;
+  const X=d=>ml+dGap(first,d)/span*(W-ml-mr),Y=v=>mt+(100-v)/100*(H-mt-mb);
+  const t=(x,y,s,a,cls)=>`<text x="${x}" y="${y}" text-anchor="${a||"start"}" class="${cls||"ax"}">${s}</text>`;
+  let g="";
+  [0,50,100].forEach(v=>{g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}" class="grid"/>`+t(ml-6,Y(v)+4,v,"end")});
+  g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(60)}" y2="${Y(60)}" class="seuil"/>`+t(ml+4,Y(60)-5,"seuil 60 %");
+  if(exam)g+=`<line x1="${X(exam)}" x2="${X(exam)}" y1="${mt}" y2="${H-mb}" class="examLine"/>`+t(X(exam),H-6,"Prüfung "+fmtD(exam),"end");
+  g+=t(X(first),H-6,fmtD(first));
+  const xt=X(today);if(dGap(first,today)>0&&xt-X(first)>44&&(!exam||X(exam)-xt>96))g+=t(xt,H-6,"auj.","middle");
+  const ends=[];
+  PROG.forEach(([k,c])=>{const pts=days.filter(d=>snap[d][k]!==undefined).map(d=>[X(d),Y(snap[d][k]),snap[d][k]]);if(!pts.length)return;
+    g+=`<path d="${pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join("")}" class="ln" style="stroke:var(${c})"/>`;
+    const p=pts[pts.length-1];ends.push({k,c,x:p[0],y:p[1],v:p[2]})});
+  ends.forEach(e=>g+=`<circle cx="${e.x}" cy="${e.y}" r="4" class="dot" style="fill:var(${e.c})"/>`);
+  /* étiquettes en bout de ligne seulement si elles ne se chevauchent pas ; sinon légende + survol + tableau */
+  const ys=ends.map(e=>e.y).sort((a,b)=>a-b);
+  if(wide&&ends.every(e=>W-e.x>=100)&&ys.every((y,i)=>!i||y-ys[i-1]>=14))ends.forEach(e=>g+=t(e.x+9,e.y+4,`${SK[e.k]} ${e.v}`,"start","endLbl"));
+  g+=`<line class="cross" x1="0" x2="0" y1="${mt}" y2="${H-mb}" visibility="hidden"/><rect class="hit" x="${ml}" y="0" width="${W-ml-mr}" height="${H}" fill="transparent"/>`;
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Courbe de progression par épreuve, détail dans le tableau des valeurs">${g}</svg><div class="tip" hidden></div>`
+    +(days.length<2?`<p class="small" style="margin:6px 0 0">Reviens demain : la courbe se dessine jour après jour.</p>`:"");
+  const svg=box.querySelector("svg"),cross=svg.querySelector(".cross"),tip=box.querySelector(".tip"),hit=svg.querySelector(".hit");
+  const hover=ev=>{const r=svg.getBoundingClientRect(),mx=(ev.clientX-r.left)*W/r.width;
+    const d=days.reduce((a,b)=>Math.abs(X(b)-mx)<Math.abs(X(a)-mx)?b:a),x=X(d);
+    cross.setAttribute("x1",x);cross.setAttribute("x2",x);cross.setAttribute("visibility","visible");
+    const head=document.createElement("b");head.textContent=fmtD(d)+(d===today?" · aujourd'hui":"");tip.replaceChildren(head);
+    PROG.forEach(([k,c])=>{if(snap[d][k]===undefined)return;const row=document.createElement("div"),key=document.createElement("i"),v=document.createElement("strong");
+      key.style.background=`var(${c})`;v.textContent=snap[d][k]+" %";row.append(key,v,document.createTextNode(" "+SK[k]));tip.append(row)});
+    tip.hidden=false;tip.style.left=Math.min(Math.max(x*r.width/W-tip.offsetWidth/2,0),r.width-tip.offsetWidth)+"px"};
+  hit.addEventListener("pointermove",hover);hit.addEventListener("pointerdown",hover);
+  hit.addEventListener("pointerleave",()=>{cross.setAttribute("visibility","hidden");tip.hidden=true});
+  if(tbl)tbl.innerHTML=`<table class="scoreTbl"><tr><th>Jour</th>${PROG.map(([k])=>`<th class="n">${SK[k]}</th>`).join("")}</tr>${days.slice(-14).reverse().map(d=>`<tr><td>${fmtD(d)}</td>${PROG.map(([k])=>`<td class="n">${snap[d][k]===undefined?"–":snap[d][k]+" %"}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+addEventListener("resize",()=>{const b=$("#prog");if(b)drawProg(b,$("#progTbl"))});
 function heute(){
   const d=daysLeft(),day=st.day&&st.day.date===todayStr()?st.day:{Q:0,V:0,S:0,W:0,E:0},sk=streakNow(),errs=errIds().length;
   const M=[["Q","Training","20 questions adaptatives",20,"smart"],["V","Wortschatz","15 mots",15,"wortschatz"],["S","Sprechen","3 cartes d'oral",3,"sprechen"],["W","Schreiben","1 formulaire ou e-mail",1,"schreiben"]];
@@ -1076,6 +1173,7 @@ function heute(){
   const off=["H","L","W","S"].map(k=>[k,acc(k)]).filter(x=>x[1]!==null).sort((a,b)=>a[1]-b[1]);
   const weak=off.length&&off[0][1]<.6?off[0][0]:null;
   const goTab={H:"smart",L:"smart",W:"schreiben",S:"sprechen"};
+  const tmr2=dayPlus(1),dq=countDue(Q,todayStr()),dv=countDue(WORDS,todayStr()),soon=countDue(Q,tmr2)+countDue(WORDS,tmr2)-dq-dv;
   $("#panel").innerHTML=`<div class="card">
    <div class="todayHead"><h2>Dein Plan</h2>${sk?`<span class="streak">🔥 ${sk} jour${sk>1?"s":""} d'affilée</span>`:""}</div>
    <div class="phase"><b>${phase[0]}</b><span class="small">${phase[1]}</span></div>
@@ -1083,11 +1181,20 @@ function heute(){
    <div class="row" style="justify-content:space-between"><div class="label">Missions du jour</div><span class="small">${done} / ${M.length} terminées</span></div>
    <div class="missions">${M.map(([k,n,desc,goal,tab])=>{const c=Math.min(day[k]||0,goal),ok=c>=goal;
      return `<button class="mis ${ok?"done":""}" data-go="${tab}"><span class="ic">${ok?"✓":""}</span><span><b>${n}</b> <span class="small">· ${desc}</span></span><span class="cnt">${c} / ${goal}</span><span class="mbar"><span data-w="${c/goal*100}" style="width:${c/goal*100}%"></span></span></button>`}).join("")}</div>
+   <div class="phase"><div class="row" style="justify-content:space-between"><b>Révisions du jour</b><span class="cnt small">${dq+dv} à revoir</span></div>
+    <span class="small">${dq+dv?`${dv} mot${dv>1?"s":""} et ${dq} question${dq>1?"s":""} reviennent aujourd'hui, juste avant que tu les oublies.`:"Rien à revoir aujourd'hui. Chaque réponse programme automatiquement sa prochaine révision."}${soon>0?` Demain : ${soon}.`:""}</span>
+    ${dq+dv?`<div class="row">${dv?`<button class="btn ghost" id="revV">Revoir ${dv} mot${dv>1?"s":""}</button>`:""}${dq?`<button class="btn ghost" data-go="smart">Revoir ${dq} question${dq>1?"s":""}</button>`:""}</div>`:""}</div>
+   <div class="prog"><div class="row" style="justify-content:space-between;align-items:baseline"><b>Progression</b><span class="small">score par épreuve, jour après jour</span></div>
+    <div class="legend">${PROG.map(([k,c])=>`<span><i style="background:var(${c})"></i>${SK[k]}</span>`).join("")}</div>
+    <div class="chartBox" id="prog"></div>
+    <details class="progTbl"><summary class="small">Voir les valeurs</summary><div id="progTbl"></div></details></div>
    ${weak?`<div class="ai-box"><b>Conseil du jour : ${SK[weak]}</b><span class="small">C'est ta partie la plus faible (${Math.round(acc(weak)*100)} %). Une session de plus aujourd'hui fera la différence.</span><div><button class="btn ghost" data-go="${goTab[weak]}">Travailler ${SK[weak]}</button></div></div>`:""}
    <div class="phase"><div class="row" style="justify-content:space-between"><b>Fehlerheft</b><span class="cnt small">${errs} question${errs>1?"s":""}</span></div>
     <span class="small">${errs?"Les questions que tu as ratées, à revoir jusqu'à deux bonnes réponses de suite.":"Aucune erreur en attente. Les questions ratées apparaîtront ici."}</span>
     ${errs?`<div><button class="btn shine" id="goErr">Revoir mes erreurs</button></div>`:""}</div></div>`;
   $$("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
+  if($("#revV"))$("#revV").onclick=()=>{vTheme="alle";vMode="karten";vRecent=[];show("wortschatz")};
+  drawProg($("#prog"),$("#progTbl"));
   if(d>0)tick($("#dNum"),d);
   if(canMove())$$(".mbar span").forEach((s,i)=>{const w=+s.dataset.w;s.style.width="0%";anim(s,{width:[ "0%",w+"%"]},{delay:.2+i*.07,type:"spring",stiffness:180,damping:24})});
   if($("#goErr"))$("#goErr").onclick=()=>{errMode=true;show("smart")};
@@ -1192,7 +1299,7 @@ let vTheme="alle",vMode="karten",vRecent=[];
 const vFull=x=>(x.a?x.a+" ":"")+x.w;
 function vPool(){let p=vTheme==="alle"?WORDS:WORDS.filter(x=>x.th===vTheme);const noun=x=>/^(der|die|das)$/.test(x.a)&&!/^\(/.test(x.p);
   if(vMode==="artikel"){p=p.filter(noun);if(!p.length)p=WORDS.filter(noun)}return p}
-function vPick(p){const c=p.filter(x=>!vRecent.includes(x.id));const pool=c.length?c:p;
+function vPick(p){const c=p.filter(x=>!vRecent.includes(x.id));const pool=srsFirst(c.length?c:p);
   const min=Math.min(...pool.map(x=>st.box[x.id]||0));const l=pool.filter(x=>(st.box[x.id]||0)===min);
   const x=l[Math.random()*l.length|0];vRecent=[x.id,...vRecent].slice(0,Math.min(12,p.length-1));return x}
 function vStats(p){const m=p.filter(x=>(st.box[x.id]||0)>=2).length;return {m,n:p.length,pct:Math.round(m/p.length*100)}}
@@ -1217,7 +1324,7 @@ function wortschatz(){
     body=`<p class="instr">Welcher Artikel passt?</p>${wordHtml(false)}<p class="plural">${esc(x.f)}</p>
      <div class="opts" style="grid-template-columns:repeat(3,1fr)">${["der","die","das"].map(a=>`<button class="opt" data-o="${a}" style="justify-content:center"><span class="art-${a}" style="font-weight:700">${a}</span></button>`).join("")}</div><div id="back"></div>`;
   }
-  $("#panel").innerHTML=`<div class="card">${head}<div class="meta"><span class="chip">${esc(th.n)}</span><span class="chip ${(st.box[x.id]||0)===0&&st.hist.length?"hot":""}">Box ${(st.box[x.id]||0)}/4</span></div>${body}</div>`;
+  $("#panel").innerHTML=`<div class="card">${head}<div class="meta"><span class="chip">${esc(th.n)}</span><span class="chip ${(st.box[x.id]||0)===0&&st.hist.length?"hot":""}">Box ${(st.box[x.id]||0)}/4</span>${isDue(x.id)?'<span class="chip">↻ Révision</span>':""}</div>${body}</div>`;
   $$("[data-th]").forEach(b=>b.onclick=()=>{vTheme=b.dataset.th;vRecent=[];wortschatz()});
   $$("[data-vm]").forEach(b=>b.onclick=()=>{vMode=b.dataset.vm;vRecent=[];wortschatz()});
   const sayBtn=$("#say");if(sayBtn)sayBtn.onclick=()=>speak(vFull(x));
@@ -1368,6 +1475,7 @@ function show(t){clearInterval(tmr);stopExam();
   moveInd();anim($("#panel").firstElementChild,{opacity:[0,1],y:[16,0]},SPRING)}
 $$("[data-tab]").forEach(b=>b.onclick=()=>show(b.dataset.tab));
 try{speechSynthesis.getVoices()}catch(e){}
+if(st.hist.length&&!(st.snap&&st.snap[todayStr()])){snapDay();save()}
 applyDesign();renderMeter();renderCountdown();heute();
 </script>
 <script>
