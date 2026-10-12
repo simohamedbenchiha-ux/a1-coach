@@ -47,10 +47,16 @@ Règles de contenu :
 
 ## Design
 
-Identité « signalétique de gare allemande » : un seul élément fort (le tableau des départs à volets),
-le reste calme. Couleurs uniquement via les tokens CSS de `:root` ; chaque token a sa valeur sombre
-(`prefers-color-scheme` + `[data-theme]`). Les palettes ne changent que `--brand`.
-Polices : Barlow Condensed (titres, chiffres), Barlow (UI), Atkinson Hyperlegible (texte).
+Thème 2027 « Holo-Bahn / Neo-Spatial » : fond aurora mesh (nappes de couleur douces et **statiques**
+derrière le contenu — `body::before` ; ne pas l'animer : chaque surface en verre se recalculerait à chaque
+image), surfaces en verre (glassmorphism avec `backdrop-filter`), bordures et halos colorés, accents
+électriques. L'élément signature reste le tableau des départs, réinterprété en affichage holographique à
+volets lumineux ; le reste est calme. Couleurs uniquement via les tokens CSS de `:root` ; chaque token a sa
+valeur sombre (`prefers-color-scheme` + `[data-theme]`). Chaque palette fixe `--brand` et sa teinte
+d'accent `--brand2`. Toute surface qui porte du texte `--brandInk` utilise `--grad` (pas `--brand2` pur) pour
+garder le contraste AA. Polices : Unbounded (titres, gros chiffres), Space Grotesk (UI, questions, mots du
+Wortschatz, chiffres tabulaires, volets), Atkinson Hyperlegible (texte de lecture). Ne pas mettre Unbounded
+sur les mots allemands : trop large, les noms longs se coupent en plein milieu.
 
 ## Animations (Motion)
 

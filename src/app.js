@@ -44,7 +44,7 @@ function renderCountdown(){
 $("#examDate").addEventListener("change",e=>{st.exam=e.target.value;save();renderCountdown();if($('[data-tab="heute"]').getAttribute("aria-selected")==="true")heute()});
 
 /* design settings: palette + light/dark, remembered per viewer */
-const PALETTES=[["ubahn","U-Bahn","#163a7a"],["rhein","Rhein","#0e6b70"],["bundes","Bundes","#a8261d"],["wald","Wald","#2f6b3a"],["lavendel","Lavendel","#5443b0"]];
+const PALETTES=[["ubahn","Indigo","#5b3df5"],["rhein","Aqua","#0e7a90"],["bundes","Magma","#c01f6a"],["wald","Emerald","#07845a"],["lavendel","Violet","#7c3aed"]];
 const MODES=[["system","Auto"],["light","☀️ Hell"],["dark","🌙 Dunkel"]];
 function applyDesign(){const r=document.documentElement;
   if(st.pal&&st.pal!=="ubahn")r.dataset.palette=st.pal;else delete r.dataset.palette;
