@@ -8,6 +8,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <meta name="theme-color" content="#eceefb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#050713" media="(prefers-color-scheme: dark)">
+<!--pwa : retiré du fichier unique par scripts/build.mjs (l'artifact claude.ai ne peut pas être installé)-->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A1 Coach">
+<!--/pwa-->
 <link rel="stylesheet" href="src/styles.css">
 <style>[hidden]{display:none!important}body{margin:0}</style>
 </head>
@@ -22,6 +29,9 @@
         <div class="swatches" id="palettes"></div>
         <div class="label">Thème</div>
         <div class="swatches" id="modes"></div>
+        <div id="installBox" hidden><div class="label">Appli hors ligne</div>
+          <button class="sw" id="installBtn" hidden>📲 Installer sur cet appareil</button>
+          <p class="small" id="installTip" style="margin:6px 0 0"></p></div>
       </div>
     </details></div>
     <div class="boardRows" id="boardRows" aria-live="polite"></div>

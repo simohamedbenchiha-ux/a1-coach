@@ -73,6 +73,20 @@ function applyDesign(){const r=document.documentElement;
   $$("[data-mode]").forEach(b=>b.onclick=()=>{st.mode=b.dataset.mode;save();applyDesign()});
   requestAnimationFrame(()=>moveInd(true));}
 
+/* ===== Appli hors ligne (PWA) : seulement quand la page est hébergée en https (ou localhost) avec son
+   manifeste. Le fichier unique (artifact claude.ai) n'a pas de manifeste : rien ne s'active. ===== */
+const PWA=!!document.querySelector('link[rel="manifest"]')&&"serviceWorker" in navigator&&(location.protocol==="https:"||/^(localhost|127\.0\.0\.1)$/.test(location.hostname));
+let installEvt=null;
+function renderInstall(){const box=$("#installBox");if(!box||!PWA)return;
+  const installed=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true,ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  box.hidden=installed||!(installEvt||ios);$("#installBtn").hidden=!installEvt;
+  $("#installTip").textContent=installEvt?"Elle s'ouvre en plein écran et marche sans réseau (sauf la correction par Claude et la dictée).":ios?"Sur iPhone ou iPad : bouton Partager, puis « Sur l'écran d'accueil ».":""}
+if(PWA){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;renderInstall()});
+  addEventListener("appinstalled",()=>{installEvt=null;renderInstall();toast("Appli installée")});
+  $("#installBtn").onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;renderInstall()};
+  renderInstall()}
+
 /* ===== Motion layer (motion.dev). Every effect answers a user action, except the one board flip on load. ===== */
 const MO=window.Motion||null;
 const RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
@@ -311,7 +325,7 @@ function drawProg(box,tbl){if(!box)return;
   const t=(x,y,s,a,cls)=>`<text x="${x}" y="${y}" text-anchor="${a||"start"}" class="${cls||"ax"}">${s}</text>`;
   let g="";
   [0,50,100].forEach(v=>{g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}" class="grid"/>`+t(ml-6,Y(v)+4,v,"end")});
-  g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(60)}" y2="${Y(60)}" class="seuil"/>`+t(ml+4,Y(60)-5,"seuil 60 %");
+  g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(60)}" y2="${Y(60)}" class="seuil"/>`+(exam?t(W-mr-4,Y(60)-5,"seuil 60 %","end"):t(ml+4,Y(60)-5,"seuil 60 %")); // à droite : zone vide avant l'examen
   if(exam)g+=`<line x1="${X(exam)}" x2="${X(exam)}" y1="${mt}" y2="${H-mb}" class="examLine"/>`+t(X(exam),H-6,"Prüfung "+fmtD(exam),"end");
   g+=t(X(first),H-6,fmtD(first));
   const xt=X(today);if(dGap(first,today)>0&&xt-X(first)>44&&(!exam||X(exam)-xt>96))g+=t(xt,H-6,"auj.","middle");
@@ -362,7 +376,7 @@ function heute(){
    <div class="missions">${M.map(([k,n,desc,goal,tab])=>{const c=Math.min(day[k]||0,goal),ok=c>=goal;
      return `<button class="mis ${ok?"done":""}" data-go="${tab}"><span class="ic">${ok?"✓":""}</span><span><b>${n}</b> <span class="small">· ${desc}</span></span><span class="cnt">${c} / ${goal}</span><span class="mbar"><span data-w="${c/goal*100}" style="width:${c/goal*100}%"></span></span></button>`}).join("")}</div>
    <div class="phase"><div class="row" style="justify-content:space-between"><b>Révisions du jour</b><span class="cnt small">${dq+dv} à revoir</span></div>
-    <span class="small">${dq+dv?`${dv} mot${dv>1?"s":""} et ${dq} question${dq>1?"s":""} reviennent aujourd'hui, juste avant que tu les oublies.`:"Rien à revoir aujourd'hui. Chaque réponse programme automatiquement sa prochaine révision."}${soon>0?` Demain : ${soon}.`:""}</span>
+    <span class="small">${dq+dv?`${[dv?`${dv} mot${dv>1?"s":""}`:"",dq?`${dq} question${dq>1?"s":""}`:""].filter(Boolean).join(" et ")} ${dq+dv>1?"reviennent":"revient"} aujourd'hui, juste avant que tu ${dq+dv>1?"les ":"l'"}oublies.`:"Rien à revoir aujourd'hui. Chaque réponse programme automatiquement sa prochaine révision."}${soon>0?` Demain : ${soon}.`:""}</span>
     ${dq+dv?`<div class="row">${dv?`<button class="btn ghost" id="revV">Revoir ${dv} mot${dv>1?"s":""}</button>`:""}${dq?`<button class="btn ghost" data-go="smart">Revoir ${dq} question${dq>1?"s":""}</button>`:""}</div>`:""}</div>
    <div class="prog"><div class="row" style="justify-content:space-between;align-items:baseline"><b>Progression</b><span class="small">score par épreuve, jour après jour</span></div>
     <div class="legend">${PROG.map(([k,c])=>`<span><i style="background:var(${c})"></i>${SK[k]}</span>`).join("")}</div>

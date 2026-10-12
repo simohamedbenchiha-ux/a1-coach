@@ -9,9 +9,11 @@ Questions et consignes en allemand (niveau A1), explications et interface en fra
 index.html          page (en-tête « tableau des départs », jauge, navigation, <main id="panel">)
 src/styles.css      tokens de design + composants (thème clair/sombre, palettes)
 src/data.js         tout le contenu : Q, TEIL, SPEAK, FORMS, WRITE, VOC/WORDS
-src/app.js          état, rendu des onglets, Motion, Claude (sample), Heute, Fehlerheft
+src/app.js          état, répétition espacée, rendu des onglets, Motion, dictée, Claude (sample),
+                    Heute (missions, révisions, courbe), Fehlerheft, PWA
 src/pdf.js          makeExamPDF() : sujet imprimable avec jsPDF
-scripts/build.mjs   rassemble tout en dist/a1-coach.html (fichier unique)
+sw.js               service worker (mode hors ligne) ; manifest.webmanifest + icons/ : appli installable
+scripts/build.mjs   rassemble tout en dist/a1-coach.html (fichier unique, sans la partie PWA)
 ```
 
 Pas de framework, pas d'étape de compilation : ouvrir `index.html` dans un navigateur suffit.
@@ -65,8 +67,17 @@ Les animations répondent à une action (réponse, onglet, mission) ; seule exce
 
 ## État
 
-`localStorage["a1coach"]` : `box` (Leitner par id), `hist` (scores récents par compétence), `err` (Fehlerheft),
-`day` + `streak` (missions du jour), `exam` (date), `pal`/`mode` (design). Toujours lire/écrire dans un try/catch.
+`localStorage["a1coach"]` : `box` (Leitner par id), `due` (date de prochaine révision par id, `AAAA-MM-JJ`),
+`hist` (scores récents par compétence), `snap` (score par épreuve et par jour, pour la courbe, 180 jours max),
+`err` (Fehlerheft), `day` + `streak` (missions du jour), `exam` (date), `pal`/`mode` (design).
+Toujours lire/écrire dans un try/catch.
+
+Répétition espacée : `record()` met à jour la boîte puis `schedule()` fixe `due` à aujourd'hui + `INT[boîte]`
+jours (0, 1, 3, 7, 14), au plus tard la veille de l'examen. `pick()` et `vPick()` passent par `srsFirst()` :
+révisions dues, puis notions jamais vues, puis avance sur le programme.
+
+Dictée : `listen()` / `stopListen()` (SpeechRecognition du navigateur, `de-DE`). Tout bouton de micro porte la
+classe `mic` : il est caché quand la dictée est absente ou refusée. Ne jamais rendre une fonction dépendante du micro.
 
 ## Fonctions liées à claude.ai
 
@@ -75,8 +86,18 @@ n'existent que lorsque la page est publiée comme artifact sur claude.ai avec le
 Hors de claude.ai : la correction affiche un message d'indisponibilité et le PDF se télécharge avec `doc.save()`.
 Pour republier : `node scripts/build.mjs`, puis publier `dist/a1-coach.html`.
 
+## Appli hors ligne (PWA)
+
+Ne s'active que si l'appli est servie en https (ou sur localhost) avec `manifest.webmanifest` : pas en ouvrant
+`index.html` comme fichier, ni dans l'artifact (le build retire le bloc `<!--pwa-->` de `index.html`).
+`sw.js` sert le cache tout de suite et le met à jour en arrière-plan : une modification arrive au chargement
+suivant. Augmenter `VERSION` dans `sw.js` seulement quand la liste `SHELL` ou `CDN` change (nouveau fichier,
+nouvelle version de bibliothèque ou de police : garder ces URL identiques à celles de `index.html`).
+
 ## Vérifier un changement
 
 1. `node --check src/data.js src/pdf.js` (et ouvrir `index.html`, console sans erreur).
 2. Parcourir les 6 onglets, répondre à une question, lancer l'Express et générer un PDF.
 3. Tester en largeur téléphone (390 px) et en thème sombre.
+4. Après un changement de `sw.js` ou des fichiers listés : servir le dossier (`python3 -m http.server`),
+   ouvrir `http://localhost:8000`, recharger une fois, couper le réseau et recharger.
