@@ -73,6 +73,60 @@ function applyDesign(){const r=document.documentElement;
   $$("[data-mode]").forEach(b=>b.onclick=()=>{st.mode=b.dataset.mode;save();applyDesign()});
   requestAnimationFrame(()=>moveInd(true));}
 
+/* ===== Appli native (Capacitor, App Store / Play Store) : NATIVE n'est vrai que dans l'appli Android / iOS.
+   Les plugins natifs sont lus sur Capacitor.Plugins (pas de bundler) ; absents, plug() renvoie null. ===== */
+const APP_VERSION="1.2.0";
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const plug=n=>NATIVE&&window.Capacitor.Plugins&&Capacitor.Plugins[n]||null;
+
+/* Enregistrer un fichier : claude.ai (capacité downloads) → appli native (feuille de partage) → navigateur. */
+const toB64=blob=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=ko;r.readAsDataURL(blob)});
+async function saveFile(name,blob){
+  const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+  if(dl){await dl.save({filename:name,data:blob});return "claude"}
+  const fs=plug("Filesystem"),sh=plug("Share");
+  if(fs&&sh){const {uri}=await fs.writeFile({path:name,data:await toB64(blob),directory:"CACHE"});await sh.share({title:name,files:[uri]});return "share"}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);return "browser"}
+const cancelled=e=>e&&(e.code==="declined"||/cancel/i.test(e.message||""));
+
+/* ===== Sauvegarde de la progression (fichier JSON) : changer d'appareil, passer du site à l'appli.
+   Un fichier importé est reconstruit champ par champ : rien d'autre n'entre dans l'état. ===== */
+const isDay=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
+function cleanState(o){if(!o||typeof o!=="object")return null;const out={box:{},hist:[],exam:"",err:{}},obj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+  if(obj(o.box))for(const [k,v] of Object.entries(o.box))if(Number.isInteger(v)&&v>=0&&v<=4)out.box[k]=v;
+  if(obj(o.due)){out.due={};for(const [k,v] of Object.entries(o.due))if(isDay(v))out.due[k]=v}
+  if(Array.isArray(o.hist))out.hist=o.hist.filter(e=>e&&SK[e.s]&&typeof e.v==="number"&&e.v>=0&&e.v<=1).slice(-500).map(e=>({s:e.s,v:e.v}));
+  if(obj(o.snap)){out.snap={};for(const [d,v] of Object.entries(o.snap))if(isDay(d)&&obj(v)){const x={};["H","L","W","S"].forEach(k=>{if(Number.isFinite(v[k])&&v[k]>=0&&v[k]<=100)x[k]=Math.round(v[k])});out.snap[d]=x}}
+  if(obj(o.err))for(const k of Object.keys(o.err))out.err[k]=1;
+  if(obj(o.day)&&isDay(o.day.date)){out.day={date:o.day.date};["Q","V","S","W","E"].forEach(k=>out.day[k]=Number.isFinite(o.day[k])?Math.max(0,o.day[k]|0):0)}
+  if(Number.isFinite(o.streak))out.streak=Math.max(0,o.streak|0);
+  ["exam","lastBackup"].forEach(k=>{if(isDay(o[k]))out[k]=o[k]});
+  if(PALETTES.some(p=>p[0]===o.pal))out.pal=o.pal;
+  if(MODES.some(m=>m[0]===o.mode))out.mode=o.mode;
+  if(typeof o.notif==="string"&&/^([01]\d|2[0-3]):00$|^off$/.test(o.notif))out.notif=o.notif;
+  out.onboarded=true;return out}
+const bkStats=x=>{const ids=Object.keys(x.box),v=ids.filter(i=>i.startsWith("v_")).length;return `${ids.length-v} question${ids.length-v>1?"s":""} et ${v} mot${v>1?"s":""} déjà travaillés`};
+function bkInfo(t){const m=$("#bkMsg");m.hidden=false;m.textContent=t||(st.lastBackup?`Dernière sauvegarde : ${fmtD(st.lastBackup)}.`:"Pas encore de sauvegarde. Garde une copie pour changer d'appareil ou passer à l'appli.")}
+async function backupSave(){const d=todayStr(),blob=new Blob([JSON.stringify({app:"a1coach",v:1,date:d,state:st})],{type:"application/json"});
+  try{await saveFile(`a1coach-sauvegarde-${d}.json`,blob);st.lastBackup=d;save();bkInfo()}
+  catch(e){bkInfo(cancelled(e)?"Sauvegarde annulée.":"La sauvegarde n'a pas abouti.")}}
+async function backupLoad(file){const c=$("#bkConfirm");c.hidden=true;if(!file)return;
+  let o=null;try{o=JSON.parse(await file.text())}catch(e){}
+  const x=o&&o.app==="a1coach"?cleanState(o.state):null;
+  if(!x)return bkInfo("Ce fichier n'est pas une sauvegarde A1 Coach.");
+  c.hidden=false;c.innerHTML=`<p class="small" style="margin:0">Sauvegarde du ${fmtD(isDay(o.date)?o.date:todayStr())} : ${bkStats(x)}. Elle remplacera ta progression actuelle sur cet appareil.</p>
+    <div class="swatches"><button class="sw" id="bkYes">Remplacer</button><button class="sw" id="bkNo">Annuler</button></div>`;
+  $("#bkNo").onclick=()=>{c.hidden=true};
+  $("#bkYes").onclick=()=>{st=x;save();c.hidden=true;bkInfo("Progression restaurée.");applyDesign();renderMeter();renderCountdown();notifSync();show("heute");toast("Progression restaurée")}}
+
+/* ===== Accueil au premier lancement + À propos ===== */
+function onboard(){const d=$("#onb");if(!d||!d.showModal)return;$("#onbDate").value=st.exam||"";$("#onbDate").min=todayStr();
+  d.onclose=()=>{const v=$("#onbDate").value;if(isDay(v)&&v>=todayStr()){st.exam=v;renderCountdown()}st.onboarded=true;save();show("heute")};
+  try{d.showModal()}catch(e){}}
+function notifSync(){} // remplacé par la couche native (rappel quotidien)
+function renderAbout(){$("#about").textContent=`A1 Coach ${APP_VERSION}${NATIVE?" · appli":""}. Application indépendante, non affiliée au Goethe-Institut ; « Goethe-Zertifikat » et « Start Deutsch » sont des marques du Goethe-Institut. Tous les textes d'entraînement sont originaux. Ta progression reste sur cet appareil.`}
+
 /* ===== Appli hors ligne (PWA) : seulement quand la page est hébergée en https (ou localhost) avec son
    manifeste. Le fichier unique (artifact claude.ai) n'a pas de manifeste : rien ne s'active. ===== */
 const PWA=!!document.querySelector('link[rel="manifest"]')&&"serviceWorker" in navigator&&(location.protocol==="https:"||/^(localhost|127\.0\.0\.1)$/.test(location.hostname));
@@ -566,14 +620,12 @@ function wortschatz(){
 async function downloadExamPDF(){
   const s=$("#pdfStatus");s.hidden=false;
   if(!window.jspdf){s.textContent="Le module PDF n'a pas pu se charger. Vérifie ta connexion et recharge la page.";return}
-  const dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
   s.textContent="Création du PDF…";
   const sol=$("#withSol").checked,doc=makeExamPDF(window.jspdf.jsPDF,sol);
-  const d=new Date().toISOString().slice(0,10);
-  if(!dl){try{doc.save(`Modellpruefung_A1_${d}${sol?"_mit_Loesungen":""}.pdf`);s.textContent="PDF téléchargé. Ouvre-le et choisis « Imprimer »."}catch(e){s.textContent="Le téléchargement n'est pas disponible dans cette vue."}return}
-  try{await dl.save({filename:`Modellpruefung_A1_${d}${sol?"_mit_Loesungen":""}.pdf`,data:new Blob([doc.output("arraybuffer")])});
-    s.textContent="PDF prêt. Ouvre-le et choisis « Imprimer » pour l'avoir sur papier. Chaque clic crée un nouveau sujet."}
-  catch(e){s.textContent=e&&e.code==="declined"?"Téléchargement annulé.":e&&e.code==="rate_limited"?"Une fenêtre de téléchargement est déjà ouverte. Réessaie dans un instant.":"Le téléchargement n'a pas abouti."}
+  const name=`Modellpruefung_A1_${todayStr()}${sol?"_mit_Loesungen":""}.pdf`;
+  try{const how=await saveFile(name,new Blob([doc.output("arraybuffer")],{type:"application/pdf"}));
+    s.textContent=(how==="share"?"PDF prêt : choisis où l'enregistrer ou l'imprimer.":"PDF prêt. Ouvre-le et choisis « Imprimer » pour l'avoir sur papier.")+" Chaque clic crée un nouveau sujet."}
+  catch(e){s.textContent=cancelled(e)?"Téléchargement annulé.":e&&e.code==="rate_limited"?"Une fenêtre de téléchargement est déjà ouverte. Réessaie dans un instant.":"Le téléchargement n'a pas abouti."}
 }
 
 /* ===== Prüfung ===== */
@@ -692,4 +744,8 @@ function show(t){clearInterval(tmr);stopExam();stopListen();
 $$("[data-tab]").forEach(b=>b.onclick=()=>show(b.dataset.tab));
 try{speechSynthesis.getVoices()}catch(e){}
 if(st.hist.length&&!(st.snap&&st.snap[todayStr()])){snapDay();save()}
-applyDesign();renderMeter();renderCountdown();heute();
+$("#bkSave").onclick=backupSave;$("#bkLoad").onclick=()=>$("#bkFile").click();
+$("#bkFile").onchange=e=>{backupLoad(e.target.files[0]);e.target.value=""};
+$("#onbAgain").onclick=()=>{$(".settings").open=false;onboard()};
+applyDesign();renderMeter();renderCountdown();renderAbout();bkInfo();notifSync();heute();
+if(!st.onboarded){if(st.hist.length){st.onboarded=true;save()}else onboard()}

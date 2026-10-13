@@ -117,6 +117,9 @@ h2{font-size:27px;line-height:1.08}
   box-shadow:0 30px 70px -24px rgba(0,0,0,.55);border:1px solid color-mix(in srgb,var(--line) 70%,transparent);
   -webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4)}
 .swatches{display:flex;gap:8px;flex-wrap:wrap}
+.setPanel{max-height:min(72vh,640px);overflow-y:auto;overscroll-behavior:contain}
+a.sw{text-decoration:none}
+.bkConfirm{display:grid;gap:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--brand) 9%,transparent);border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line))}
 .sw{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border-radius:999px;border:1.5px solid var(--line);background:color-mix(in srgb,var(--surface) 60%,transparent);color:var(--ink);font:600 13px var(--ui);cursor:pointer;transition:border-color .15s,transform .12s}
 .sw:hover{transform:translateY(-1px)}
 .sw i{width:20px;height:20px;border-radius:50%;display:block;box-shadow:0 0 0 2px color-mix(in srgb,#fff 45%,transparent) inset}
@@ -311,6 +314,15 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .tip i{width:12px;height:3px;border-radius:2px;display:block}
 .progTbl summary{cursor:pointer}
 #progTbl{overflow-x:auto;margin-top:6px}
+
+/* ---------- accueil (premier lancement) ---------- */
+.onb{border:none;padding:0;background:transparent;color:var(--ink);width:min(440px,calc(100vw - 32px));max-height:calc(100vh - 32px)}
+.onb::backdrop{background:rgba(5,7,19,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.onb .card{background:color-mix(in srgb,var(--surface) 94%,transparent)}
+.onbList{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.onbList li{display:grid;gap:2px;padding-left:16px;border-left:3px solid var(--brand)}
+.onbList b{font:700 16px var(--ui)}
+.onb .legal{font-size:12.5px}
 
 /* ---------- micro (dictée) ---------- */
 .btn.rec{background:var(--bad);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 30%,transparent);animation:recPulse 1.4s ease-in-out infinite}

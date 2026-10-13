@@ -23,7 +23,7 @@
   <header class="board" id="board">
     <div class="boardTop"><span class="lineBadge">A1</span><span class="boardTitle">Start Deutsch 1 Coach</span>
     <details class="settings">
-      <summary>🎨 Design</summary>
+      <summary>⚙️ Réglages</summary>
       <div class="setPanel">
         <div class="label">Couleur de ligne</div>
         <div class="swatches" id="palettes"></div>
@@ -32,6 +32,16 @@
         <div id="installBox" hidden><div class="label">Appli hors ligne</div>
           <button class="sw" id="installBtn" hidden>📲 Installer sur cet appareil</button>
           <p class="small" id="installTip" style="margin:6px 0 0"></p></div>
+        <div class="label">Ma progression</div>
+        <div class="swatches"><button class="sw" id="bkSave">💾 Sauvegarder</button><button class="sw" id="bkLoad">📂 Restaurer</button></div>
+        <input type="file" id="bkFile" accept=".json,application/json" hidden>
+        <p class="small" id="bkMsg" style="margin:0" hidden></p>
+        <div id="bkConfirm" class="bkConfirm" hidden></div>
+        <div id="notifBox" hidden><div class="label">Rappel quotidien</div>
+          <div class="swatches"><select id="notifTime" aria-label="Heure du rappel"></select></div></div>
+        <div class="label">À propos</div>
+        <p class="small" style="margin:0" id="about"></p>
+        <div class="swatches"><button class="sw" id="onbAgain">👋 Revoir l'accueil</button><a class="sw" id="privacyLink" target="_blank" rel="noopener" href="https://simohamedbenchiha-ux.github.io/a1-coach/privacy.html">🔒 Confidentialité</a></div>
       </div>
     </details></div>
     <div class="boardRows" id="boardRows" aria-live="polite"></div>
@@ -57,6 +67,22 @@
   </nav>
 
   <main id="panel"></main>
+  <dialog class="onb" id="onb" aria-labelledby="onbTitle">
+    <form method="dialog" class="card">
+      <div class="label">Willkommen</div>
+      <h2 id="onbTitle">Prêt pour le Start Deutsch 1 ?</h2>
+      <ul class="onbList">
+        <li><b>Un plan chaque jour</b><span class="small">missions courtes et révisions au bon moment, juste avant d'oublier</span></li>
+        <li><b>Le format officiel</b><span class="small">Hören, Lesen, Schreiben, Sprechen, examen blanc chronométré et PDF</span></li>
+        <li><b>Ta progression</b><span class="small">jauge par épreuve et courbe jusqu'au jour J</span></li>
+      </ul>
+      <label class="label" for="onbDate">Date de ton examen</label>
+      <input type="date" id="onbDate">
+      <p class="small" style="margin:0">Pas encore de date ? Laisse vide, tu pourras l'ajouter plus tard.</p>
+      <button class="btn shine" id="onbGo" value="go" autofocus>C'est parti</button>
+      <p class="small legal" style="margin:0">Application indépendante, non affiliée au Goethe-Institut. Textes d'entraînement originaux.</p>
+    </form>
+  </dialog>
   <p class="small">La barre verticale de chaque jauge marque 60 %, le seuil de réussite. « Wortschatz » et « Grammatik » ne sont pas des épreuves officielles : ils consolident les bases. Le Wortschatz suit l'organisation de la Wortliste officielle Start Deutsch 1 (thèmes et groupes de mots). Utiliser « Hilfe » compte pour une demi-réponse. Ta progression reste enregistrée dans ce navigateur.</p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/motion@12.23.12/dist/motion.js"></script>
