@@ -2954,7 +2954,7 @@ function setLang(id){if(!LANGS.some(l=>l.id===id))return;LANG=id;st.lang=id;save
 /* ===== Appli native (Capacitor, App Store / Play Store) : NATIVE n'est vrai que dans l'appli Android / iOS.
    Sans bundler, l'appli embarque vendor/capacitor.js ; un plugin natif n'est joignable qu'après
    Capacitor.registerPlugin(nom). plug() l'enregistre une fois, ou renvoie null s'il est absent. ===== */
-const APP_VERSION="1.2.0";
+const APP_VERSION="1.3.0";
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 const plugs={};
 function plug(n){if(!NATIVE)return null;
