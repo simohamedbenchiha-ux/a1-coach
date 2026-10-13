@@ -71,7 +71,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
    radial-gradient(60vmax 60vmax at 90% 100%,color-mix(in srgb,var(--mark) 22%,transparent),transparent 60%),
    radial-gradient(48vmax 48vmax at 0% 100%,color-mix(in srgb,var(--fr) 28%,transparent),transparent 60%);
   opacity:.9}
-.wrap{max-width:740px;margin:0 auto;padding-inline:16px;padding-block:18px calc(var(--navH) + 44px);display:flex;flex-direction:column;gap:16px;position:relative;z-index:1}
+.wrap{max-width:740px;margin:0 auto;padding-inline:16px;padding-block:max(18px,calc(env(safe-area-inset-top,0px) + 8px)) calc(var(--navH) + 44px);display:flex;flex-direction:column;gap:16px;position:relative;z-index:1}
 h1,h2{font-family:var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance;font-weight:700}
 h2{font-size:27px;line-height:1.08}
 .sub{color:var(--muted);margin:0}
@@ -323,6 +323,8 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .onbList li{display:grid;gap:2px;padding-left:16px;border-left:3px solid var(--brand)}
 .onbList b{font:700 16px var(--ui)}
 .onb .legal{font-size:12.5px}
+.onbNotif{display:flex;gap:10px;align-items:center;font:600 15px var(--ui)}
+.onbNotif input{width:20px;height:20px;accent-color:var(--brand)}
 
 /* ---------- micro (dictée) ---------- */
 .btn.rec{background:var(--bad);color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--bad) 30%,transparent);animation:recPulse 1.4s ease-in-out infinite}

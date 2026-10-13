@@ -13,7 +13,17 @@ src/app.js          état, répétition espacée, rendu des onglets, Motion, dic
                     Heute (missions, révisions, courbe), Fehlerheft, PWA
 src/pdf.js          makeExamPDF() : sujet imprimable avec jsPDF
 sw.js               service worker (mode hors ligne) ; manifest.webmanifest + icons/ : appli installable
+privacy.html        politique de confidentialité (exigée par les stores, en ligne sur GitHub Pages)
 scripts/build.mjs   rassemble tout en dist/a1-coach.html (fichier unique, sans la partie PWA)
+
+Appli Android / iOS (Capacitor 8) :
+capacitor.config.json   identifiant de l'appli, nom, plugins
+scripts/build-app.mjs   assemble www/ (sans PWA, bibliothèques et polices locales, + vendor/capacitor.js)
+scripts/vendor.mjs      télécharge Motion, jsPDF et les polices dans vendor/ (commité ; à relancer si leurs versions changent)
+android/, ios/          projets natifs générés puis ajustés (permissions, icônes) : commités
+store/                  icônes sources, captures, textes et questionnaires des stores (fiche-store.md)
+STORE.md                guide de publication pas à pas
+.github/workflows/      android.yml (APK de test, AAB signé si secrets) ; ios.yml (compilation, TestFlight)
 ```
 
 Pas de framework, pas d'étape de compilation : ouvrir `index.html` dans un navigateur suffit.
@@ -69,7 +79,9 @@ Les animations répondent à une action (réponse, onglet, mission) ; seule exce
 
 `localStorage["a1coach"]` : `box` (Leitner par id), `due` (date de prochaine révision par id, `AAAA-MM-JJ`),
 `hist` (scores récents par compétence), `snap` (score par épreuve et par jour, pour la courbe, 180 jours max),
-`err` (Fehlerheft), `day` + `streak` (missions du jour), `exam` (date), `pal`/`mode` (design).
+`err` (Fehlerheft), `day` + `streak` (missions du jour), `exam` (date), `pal`/`mode` (design),
+`onboarded` (accueil vu), `lastBackup` (date de sauvegarde), `notif` (heure du rappel, appli seulement).
+Un nouveau champ d'état doit aussi être ajouté à `cleanState()` (restauration d'une sauvegarde), sinon il est perdu.
 Toujours lire/écrire dans un try/catch.
 
 Répétition espacée : `record()` met à jour la boîte puis `schedule()` fixe `due` à aujourd'hui + `INT[boîte]`
@@ -81,11 +93,28 @@ Dictée : `listen()` / `stopListen()` (SpeechRecognition du navigateur, `de-DE`)
 passent en mode clavier : focus sur le champ + aide `KBD` pour dicter avec le micro du clavier ou du système.
 Ne jamais cacher un bouton micro, ni rendre une fonction dépendante de la dictée intégrée.
 
+## Appli mobile (Capacitor)
+
+- `NATIVE` vrai seulement dans l'appli. Pas de bundler : un plugin natif s'obtient par `plug("Nom")`
+  (qui appelle `Capacitor.registerPlugin`) et vaut `null` ailleurs. Tout appel natif garde un repli web.
+- Plugins : SpeechRecognition (@capgo, dictée), TextToSpeech (voix ; la WebView Android n'a pas
+  `speechSynthesis`), LocalNotifications (rappel non exact), Haptics, Filesystem + Share (`saveFile()`),
+  App (bouton retour), StatusBar. Toujours passer par `speak()` / `hush()` pour la voix et par `saveFile()`
+  pour un fichier à enregistrer (claude.ai, partage natif ou téléchargement).
+- `hasAI()` : la correction et le partenaire de conversation n'existent que dans claude.ai. Ailleurs (site,
+  appli des stores), ne jamais afficher un bouton qui ne marcherait pas (règle Apple 2.1).
+- Après un changement de `index.html` ou `src/` : `npm run sync` met à jour `android/` et `ios/`.
+- Version : `version` de `package.json` et `APP_VERSION` de `src/app.js` ensemble. Le numéro d'envoi
+  Android vient de la CI (`A1_VERSION_CODE`).
+- Une nouvelle permission ou donnée traitée impose de mettre à jour `privacy.html` et `store/fiche-store.md`.
+  Ne pas réintroduire `SCHEDULE_EXACT_ALARM` (refus Google Play pour une appli qui n'est pas un réveil).
+
 ## Fonctions liées à claude.ai
 
 `claude.use("sample")` (correction par Claude, partenaire de conversation) et `claude.use("downloads")`
 n'existent que lorsque la page est publiée comme artifact sur claude.ai avec les capacités `sample` et `downloads`.
-Hors de claude.ai : la correction affiche un message d'indisponibilité et le PDF se télécharge avec `doc.save()`.
+Hors de claude.ai : les boutons de correction et l'onglet Gespräch sont masqués (`hasAI()`), la dictée propose
+« Comparer au modèle », et le PDF comme la sauvegarde passent par `saveFile()`.
 Pour republier : `node scripts/build.mjs`, puis publier `dist/a1-coach.html`.
 
 ## Appli hors ligne (PWA)

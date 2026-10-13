@@ -16,6 +16,12 @@ Ouvre `index.html` dans ton navigateur. Aucune installation n'est nécessaire.
   conversation se pilote aussi au micro. Marche dans Chrome, Edge et Safari.
 - **Appli hors ligne** : installable sur téléphone ou ordinateur, utilisable sans réseau.
 
+## Applis Android et iOS
+
+Le dossier contient aussi les applis natives (Capacitor) : dictée et voix natives, rappel quotidien,
+sauvegarde partagée, hors ligne dès le premier lancement. La CI GitHub construit un APK de test à chaque
+modification. Pour publier sur le Play Store et l'App Store, suis **STORE.md**.
+
 ## Installer l'appli sur ton téléphone (hors ligne)
 
 Il faut que l'appli soit en ligne sur un site https. Le plus simple, gratuit :

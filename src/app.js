@@ -71,13 +71,17 @@ function applyDesign(){const r=document.documentElement;
   $("#modes").innerHTML=MODES.map(([k,n])=>`<button class="sw" data-mode="${k}" aria-pressed="${(st.mode||"system")===k}">${n}</button>`).join("");
   $$("[data-pal]").forEach(b=>b.onclick=()=>{st.pal=b.dataset.pal;save();applyDesign()});
   $$("[data-mode]").forEach(b=>b.onclick=()=>{st.mode=b.dataset.mode;save();applyDesign()});
-  requestAnimationFrame(()=>moveInd(true));}
+  requestAnimationFrame(()=>moveInd(true));if(typeof statusBar==="function")statusBar()}
 
 /* ===== Appli native (Capacitor, App Store / Play Store) : NATIVE n'est vrai que dans l'appli Android / iOS.
-   Les plugins natifs sont lus sur Capacitor.Plugins (pas de bundler) ; absents, plug() renvoie null. ===== */
+   Sans bundler, l'appli embarque vendor/capacitor.js ; un plugin natif n'est joignable qu'après
+   Capacitor.registerPlugin(nom). plug() l'enregistre une fois, ou renvoie null s'il est absent. ===== */
 const APP_VERSION="1.2.0";
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
-const plug=n=>NATIVE&&window.Capacitor.Plugins&&Capacitor.Plugins[n]||null;
+const plugs={};
+function plug(n){if(!NATIVE)return null;
+  if(!(n in plugs)){const C=window.Capacitor;plugs[n]=C.registerPlugin&&C.isPluginAvailable&&C.isPluginAvailable(n)?C.registerPlugin(n):null}
+  return plugs[n]}
 
 /* Enregistrer un fichier : claude.ai (capacité downloads) → appli native (feuille de partage) → navigateur. */
 const toB64=blob=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=ko;r.readAsDataURL(blob)});
@@ -122,9 +126,33 @@ async function backupLoad(file){const c=$("#bkConfirm");c.hidden=true;if(!file)r
 
 /* ===== Accueil au premier lancement + À propos ===== */
 function onboard(){const d=$("#onb");if(!d||!d.showModal)return;$("#onbDate").value=st.exam||"";$("#onbDate").min=todayStr();
-  d.onclose=()=>{const v=$("#onbDate").value;if(isDay(v)&&v>=todayStr()){st.exam=v;renderCountdown()}st.onboarded=true;save();show("heute")};
+  const nr=$("#onbNotifRow");if(nr)nr.hidden=!plug("LocalNotifications");
+  d.onclose=()=>{const v=$("#onbDate").value;if(isDay(v)&&v>=todayStr()){st.exam=v;renderCountdown()}
+    if(nr&&!nr.hidden&&!st.onboarded&&$("#onbNotif").checked){st.notif="19:00";notifSync();notifApply()}
+    st.onboarded=true;save();show("heute")};
   try{d.showModal()}catch(e){}}
-function notifSync(){} // remplacé par la couche native (rappel quotidien)
+/* Rappel quotidien (appli seulement) : notification locale répétée chaque jour, alarme non exacte. */
+async function notifApply(){const LN=plug("LocalNotifications");if(!LN)return;
+  try{await LN.cancel({notifications:[{id:1}]})}catch(e){}
+  if(!st.notif||st.notif==="off")return;
+  try{const p=await LN.requestPermissions();
+    if(p.display!=="granted"){st.notif="off";save();notifSync();bkInfo("Notifications refusées : active-les dans les réglages du téléphone pour recevoir le rappel.");return}
+    await LN.schedule({notifications:[{id:1,title:"A1 Coach",body:"Tes révisions du jour t'attendent : 10 minutes suffisent. Los geht's!",
+      schedule:{on:{hour:+st.notif.slice(0,2),minute:0},allowWhileIdle:false},isExactNotification:false,smallIcon:"ic_stat_notify"}]})}
+  catch(e){}}
+function notifSync(){const box=$("#notifBox");if(!box)return;box.hidden=!plug("LocalNotifications");if(box.hidden)return;
+  const sel=$("#notifTime"),hours=[7,8,9,12,17,18,19,20,21];
+  sel.innerHTML=`<option value="off">Désactivé</option>`+hours.map(h=>`<option value="${String(h).padStart(2,"0")}:00">Chaque jour à ${h} h</option>`).join("");
+  sel.value=st.notif||"off";sel.onchange=()=>{st.notif=sel.value;save();notifApply()}}
+const appPlug=plug("App");
+if(appPlug)appPlug.addListener("backButton",()=>{const d=$("#onb");if(d&&d.open)return d.close();
+  if($(".settings").open)return void($(".settings").open=false);
+  const cur=$('[data-tab][aria-selected="true"]');if(cur&&cur.dataset.tab!=="heute")return show("heute");
+  appPlug.exitApp()});
+/* barre d'état : texte clair sur fond sombre, et l'inverse (suit le thème choisi ou celui du système) */
+function statusBar(){const sb=plug("StatusBar");if(!sb)return;const r=document.documentElement.dataset.theme;
+  const dark=r?r==="dark":matchMedia("(prefers-color-scheme: dark)").matches;sb.setStyle({style:dark?"DARK":"LIGHT"}).catch(()=>{})}
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",statusBar)}catch(e){}
 function renderAbout(){$("#about").textContent=`A1 Coach ${APP_VERSION}${NATIVE?" · appli":""}. Application indépendante, non affiliée au Goethe-Institut ; « Goethe-Zertifikat » et « Start Deutsch » sont des marques du Goethe-Institut. Tous les textes d'entraînement sont originaux. Ta progression reste sur cet appareil.`}
 
 /* ===== Appli hors ligne (PWA) : seulement quand la page est hébergée en https (ou localhost) avec son
@@ -174,7 +202,7 @@ function confetti(x,y,n){if(!canMove())return;const cols=["var(--mark)","var(--b
     const a=Math.random()*Math.PI*2,r=50+Math.random()*70;
     const p=anim(c,{x:[0,Math.cos(a)*r],y:[0,Math.sin(a)*r-40,Math.sin(a)*r+30],rotate:[0,(Math.random()-.5)*540],opacity:[1,1,0]},{duration:.9,ease:"easeOut"});
     if(p&&p.finished)p.finished.then(()=>c.remove(),()=>c.remove());else setTimeout(()=>c.remove(),1000)}}
-function fx(ok,el){if(!el)return;
+function fx(ok,el){if(!el)return;const hp=plug("Haptics");if(hp)hp.notification({type:ok?"SUCCESS":"ERROR"}).catch(()=>{});
   if(ok){anim(el,{scale:[1,1.045,1]},{duration:.4,ease:"easeOut"});const r=el.getBoundingClientRect();confetti(r.left+r.width/2,r.top+r.height/2,14)}
   else anim(el,{x:[0,-9,9,-6,6,-3,0]},{duration:.42})}
 /* toast */
@@ -186,7 +214,12 @@ function tick(el,to,fmt){if(!el)return;fmt=fmt||(v=>String(v));if(!canMove()){el
 
 /* audio */
 let rate=.85;
-function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang="de-DE";u.rate=rate;
+/* Synthèse vocale : dans l'appli, voix natives du système (la WebView Android n'a pas speechSynthesis ;
+   sur iPhone, « playback » joue même en mode silencieux). Sur le web, Web Speech API. */
+function hush(){try{speechSynthesis.cancel()}catch(e){}const t=plug("TextToSpeech");if(t)t.stop().catch(()=>{})}
+function speak(t){const tts=plug("TextToSpeech");
+  if(tts){tts.speak({text:t,lang:"de-DE",rate,category:"playback",queueStrategy:0}).catch(()=>{});return true}
+  try{const u=new SpeechSynthesisUtterance(t);u.lang="de-DE";u.rate=rate;
   const v=speechSynthesis.getVoices().find(v=>/^de/i.test(v.lang));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u);return true}catch(e){return false}}
 const rateLabel=()=>`Tempo: ${rate<1?"langsam":"normal"}`;
 
@@ -259,7 +292,8 @@ let spPart=2,spIdx=0,tmr=null;
    - sinon (appli installée sur iPhone, artifact sans micro, Firefox, micro refusé) : le bouton 🎙️ ouvre
      le champ de texte et explique comment dicter avec le micro du clavier ou du système (KBD). ===== */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let rec=null,apiMic=!!SR;
+const NSR=plug("SpeechRecognition"); // appli native : reconnaissance du système (marche aussi sur iPhone)
+let rec=null,apiMic=NSR?true:!!SR;
 const UA=navigator.userAgent,IOS=/iphone|ipad|ipod/i.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
 const KBD=IOS?"Touche le champ de texte, puis le micro 🎤 du clavier, et parle allemand. Si le texte sort en français, passe au clavier allemand avec 🌐 (à ajouter une fois : Réglages → Général → Clavier → Claviers)."
   :/android/i.test(UA)?"Touche le champ de texte, puis le micro 🎤 du clavier, et parle allemand. Si le texte sort en français, ajoute l'allemand aux langues du clavier (Gboard : ⚙️ → Langues)."
@@ -270,7 +304,26 @@ const MICERR={"not-allowed":"La dictée intégrée n'a pas accès au micro ici."
   "service-not-allowed":"La dictée intégrée n'est pas disponible ici.",
   "audio-capture":"Aucun micro détecté sur cet appareil.","no-speech":"Je n'ai rien entendu. Rapproche-toi du micro et réessaie.",
   "network":"La dictée a besoin d'une connexion internet."};
-function listen({continuous,onText,onEnd,onErr}){if(!apiMic)return false;stopListen();try{speechSynthesis.cancel()}catch(e){}
+function listen(o){if(!apiMic)return false;stopListen();hush();return NSR?nativeListen(o):webListen(o)}
+/* Appli : plugin @capgo/capacitor-speech-recognition. En mode continu (carte de 30 s, « Dicter »), continuousPTT
+   relance l'écoute après chaque pause ; « stopped » n'arrive qu'à la vraie fin de session. */
+function nativeListen({continuous,onText,onEnd,onErr}){
+  let last="",done=false,stopped=false;const subs=[],join=(a,b)=>(a+" "+b).replace(/\s+/g," ").trim();
+  const txt=e=>e.accumulatedText||(e.isRestarting?e.accumulated:join(e.accumulated||"",e.matches&&e.matches[0]||""))||"";
+  const h={stop:()=>{stopped=true;(continuous?NSR.setPTTState({held:false}):Promise.resolve()).catch(()=>{}).then(()=>NSR.stop()).catch(()=>{})}};
+  const finish=()=>{if(done)return;done=true;if(rec===h)rec=null;subs.forEach(p=>Promise.resolve(p).then(x=>x&&x.remove()).catch(()=>{}));onEnd&&onEnd(last)};
+  rec=h;
+  (async()=>{try{
+      const p=await NSR.requestPermissions();
+      if(p.speechRecognition!=="granted"){apiMic=false;onErr&&onErr(MICERR["not-allowed"]+" "+KBD);return finish()}
+      subs.push(NSR.addListener("partialResults",e=>{const t=txt(e);if(t&&!done){last=t;onText&&onText(t)}}));
+      subs.push(NSR.addListener("listeningState",e=>{if((e.state||e.status)==="stopped")finish()}));
+      if(stopped)return finish();
+      await NSR.start({language:"de-DE",partialResults:true,popup:false,addPunctuation:true,continuousPTT:!!continuous});
+      if(continuous)await NSR.setPTTState({held:true});
+    }catch(e){if(!last)onErr&&onErr(MICERR["no-speech"]);finish()}})();
+  return true}
+function webListen({continuous,onText,onEnd,onErr}){
   let fin="";const r=new SR();r.lang="de-DE";r.interimResults=true;r.continuous=!!continuous;
   const clean=t=>t.replace(/\s+/g," ").trim();
   r.onresult=e=>{let tmp="";for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript+" ";else tmp+=x[0].transcript}onText&&onText(clean(fin+tmp))};
@@ -280,9 +333,13 @@ function listen({continuous,onText,onEnd,onErr}){if(!apiMic)return false;stopLis
   try{r.start();rec=r;return true}catch(e){return false}}
 function stopListen(){if(rec){const r=rec;rec=null;try{r.stop()}catch(e){}}}
 
+/* La correction et le partenaire de conversation passent par claude.ai : ailleurs (site, appli des stores),
+   on ne montre pas de bouton qui ne marcherait pas, on propose de comparer au modèle. */
+const hasAI=()=>!!(window.claude&&window.claude.use);
 function sprechen(){
   clearInterval(tmr);stopListen();
-  const spTabs=`<div class="sublist">${[1,2,3,4].map(n=>`<button class="tab" data-p="${n}" aria-selected="${n===spPart}">${n===4?"💬 Gespräch":"Teil "+n}</button>`).join("")}</div>`;
+  if(spPart===4&&!hasAI())spPart=2;
+  const spTabs=`<div class="sublist">${(hasAI()?[1,2,3,4]:[1,2,3]).map(n=>`<button class="tab" data-p="${n}" aria-selected="${n===spPart}">${n===4?"💬 Gespräch":"Teil "+n}</button>`).join("")}</div>`;
   if(spPart===4){gespraech(spTabs);$$("[data-p]").forEach(b=>b.onclick=()=>{spPart=+b.dataset.p;spIdx=0;sprechen()});return}
   const P=SPEAK[spPart],it=P.items[spIdx%P.items.length];
   $("#panel").innerHTML=`<div class="card">
@@ -290,28 +347,34 @@ function sprechen(){
    <div class="label">${P.title} · ${P.max} Punkte</div><div class="sign">${esc(it.p)}</div>${it.hint?`<p class="instr">${esc(it.hint)}</p>`:""}
    <div><button class="btn help" id="help">🇫🇷 Hilfe</button><p class="fr" id="frT" hidden>${esc(it.fr)}</p></div>
    <div class="row"><span class="timer" id="t">0:30</span><button class="btn mark" id="go">${apiMic?"🎙️ ":""}Laut sprechen (30 s)</button></div>
-   <p class="small" style="margin:0">${apiMic?"Le micro transcrit ce que tu dis pendant les 30 secondes : tu pourras ensuite le faire corriger par Claude.":"Pour faire corriger ta réponse orale : « 🎙️ Dicter » plus bas, avec le micro de ton clavier."}</p>
+   <p class="small" style="margin:0">${apiMic?`Le micro transcrit ce que tu dis pendant les 30 secondes : tu pourras ensuite ${hasAI()?"le faire corriger par Claude":"le comparer au modèle"}.`:`Pour ${hasAI()?"faire corriger":"comparer au modèle"} ta réponse orale : « 🎙️ Dicter » plus bas, avec le micro de ton clavier.`}</p>
    <p class="liveTx" id="spLive" hidden></p><p class="status" id="micMsg" hidden></p>
    <div id="m"></div>
    <div class="row"><button class="btn ghost" id="show">Musterlösung</button></div>
-   <details class="aiWrap" id="spWrap"><summary>✍️ Écrire ou 🎙️ dicter ma réponse et la faire corriger par Claude</summary>
+   <details class="aiWrap" id="spWrap"><summary>✍️ Écrire ou 🎙️ dicter ma réponse ${hasAI()?"et la faire corriger par Claude":"pour la comparer au modèle"}</summary>
     <textarea id="spTxt" lang="de" style="min-height:90px" placeholder="Écris ou dicte ici ce que tu dirais, en allemand…"></textarea>
-    <div class="row"><button class="btn" id="spAi">Faire corriger</button><button class="btn ghost mic" id="spMic">🎙️ Dicter</button></div>
+    <div class="row">${hasAI()?'<button class="btn" id="spAi">Faire corriger</button>':'<button class="btn" id="spCmp">Comparer au modèle</button>'}<button class="btn ghost mic" id="spMic">🎙️ Dicter</button></div>
     <p class="small" id="spKbd" hidden></p><div id="spOut"></div></details></div>`;
   const card=$("#panel").firstElementChild,alive=()=>card.isConnected; // ignore une dictée qui finit après un changement de carte
   const msg=t=>{if(!alive())return;const m=$("#micMsg");m.hidden=!t;m.textContent=t||""};
   const live=t=>{if(!alive())return;const l=$("#spLive");l.hidden=false;l.textContent=t};
   $$("[data-p]").forEach(b=>b.onclick=()=>{spPart=+b.dataset.p;spIdx=0;sprechen()});
-  $("#spAi").onclick=()=>aiSpeak(spPart,it,$("#spTxt").value,$("#spOut"),$("#spAi"));
+  if($("#spAi"))$("#spAi").onclick=()=>aiSpeak(spPart,it,$("#spTxt").value,$("#spOut"),$("#spAi"));
   $("#help").onclick=()=>{$("#frT").hidden=false;$("#help").disabled=true};
   $("#go").onclick=()=>{let s=30;clearInterval(tmr);$("#go").disabled=true;msg("");
     if(listen({continuous:true,onText:live,onErr:msg,onEnd:t=>{if(!alive()||!t)return;$("#spTxt").value=t;$("#spWrap").open=true;
-      msg("Ta réponse est transcrite plus bas : fais-la corriger par Claude.")}}))live("🎙️ J'écoute…");
+      msg(`Ta réponse est transcrite plus bas : ${hasAI()?"fais-la corriger par Claude":"compare-la au modèle"}.`)}}))live("🎙️ J'écoute…");
     tmr=setInterval(()=>{s--;$("#t").textContent="0:"+String(s).padStart(2,"0");if(s<=0){clearInterval(tmr);reveal()}},1000)};
   const reveal=()=>{clearInterval(tmr);stopListen();$("#m").innerHTML=`<div class="model">${nl(it.m)}</div><div class="row" style="margin-top:10px"><span class="small">Hat es geklappt?</span><button class="btn" data-r="1">Ja</button><button class="btn ghost" data-r=".5">Teilweise</button><button class="btn ghost" data-r="0">Nein</button></div>`;
     $("#show").textContent="🔊 Muster anhören";$("#show").onclick=()=>speak(it.m.replace(/Frage:|Antwort:|–/g,""));
     $$("[data-r]").forEach(b=>b.onclick=()=>{record("S",+b.dataset.r);spIdx++;sprechen()})};
   $("#show").onclick=reveal;
+  if($("#spCmp"))$("#spCmp").onclick=()=>{const t=$("#spTxt").value.trim();
+    if(!t){$("#spOut").innerHTML=`<div class="ai-box"><span class="small">Écris ou dicte d'abord ta réponse.</span></div>`;return}
+    if(!$("#m").innerHTML)reveal();
+    $("#spOut").innerHTML=`<div class="ai-box"><div class="label">Ta réponse</div><div class="model" lang="de">${nl(t)}</div>
+      <span class="small">Compare-la à la Musterlösung : as-tu donné les mêmes informations ? Le verbe est-il en 2e position ? Puis évalue-toi avec « Hat es geklappt? ».</span></div>`;
+    $("#m").scrollIntoView({behavior:RM?"auto":"smooth",block:"center"})};
   const mic=$("#spMic"),tip=t=>{if(!alive())return;const k=$("#spKbd");k.hidden=false;k.textContent=t};
   const viaKbd=()=>{tip(KBD);$("#spTxt").focus()}; // le focus ouvre le clavier du téléphone
   mic.onclick=()=>{if(mic.classList.contains("rec")){stopListen();return}
@@ -360,8 +423,8 @@ function schreiben(){
    ${mailHtml(w)}
    <div><button class="btn help" id="help">🇫🇷 Hilfe</button><div id="frT" hidden><p class="fr">${esc(w.fr)}</p><ul class="fr">${w.pts.map(p=>`<li>${esc(p[1])}</li>`).join("")}</ul></div></div>
    <label class="label" for="txt">Ihre E-Mail</label><textarea id="txt" placeholder="Liebe … / Lieber … / Sehr geehrte …"></textarea>
-   <div class="row"><button class="btn" id="chk">Korrigieren</button><button class="btn ghost" id="ai">✨ Correction détaillée par Claude</button><button class="btn ghost" id="nx">Neue Aufgabe</button></div><div id="aiOut"></div><div id="res"></div></div>`;
-  $("#ai").onclick=()=>aiMail(w,$("#txt").value,$("#aiOut"),$("#ai"));
+   <div class="row"><button class="btn" id="chk">Korrigieren</button>${hasAI()?'<button class="btn ghost" id="ai">✨ Correction détaillée par Claude</button>':""}<button class="btn ghost" id="nx">Neue Aufgabe</button></div><div id="aiOut"></div><div id="res"></div></div>`;
+  if($("#ai"))$("#ai").onclick=()=>aiMail(w,$("#txt").value,$("#aiOut"),$("#ai"));
   bindW();$("#help").onclick=()=>{$("#frT").hidden=false;$("#help").disabled=true};
   $("#nx").onclick=()=>{wIdx++;schreiben()};
   $("#chk").onclick=()=>{const g=gradeMail(w,$("#txt").value);record("W",g.sc);
@@ -630,7 +693,7 @@ async function downloadExamPDF(){
 
 /* ===== Prüfung ===== */
 let ex=null,exT=null;
-function stopExam(){clearInterval(exT);ex=null;try{speechSynthesis.cancel()}catch(e){}}
+function stopExam(){clearInterval(exT);ex=null;hush();}
 function exam(){
   stopExam();
   $("#panel").innerHTML=`<div class="card"><h2>Modellprüfung A1</h2>
@@ -676,7 +739,7 @@ function examQ(){const M=ex.mods[ex.m];
   bindAudio(q,TEIL[q.p].plays);
   $$(".opt").forEach(b=>b.onclick=()=>{ex.ans.push({q,ok:opts[b.dataset.i]===ans});ex.i++;examQ()});
 }
-function endMod(){clearInterval(exT);try{speechSynthesis.cancel()}catch(e){}
+function endMod(){clearInterval(exT);hush();
   const M=ex.mods[ex.m];M.qs.slice(ex.i).forEach(q=>ex.ans.push({q,ok:false}));ex.i=M.qs.length;
   if(ex.mode==="express")return finishExpress();
   ex.raw[M.s]=ex.ans.filter(a=>a.q.s===M.s&&a.ok).length;

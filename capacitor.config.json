@@ -1,0 +1,18 @@
+{
+  "appId": "io.github.simohamedbenchihaux.a1coach",
+  "appName": "A1 Coach",
+  "webDir": "www",
+  "backgroundColor": "#050713",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#050713"
+  },
+  "plugins": {
+    "SystemBars": { "insetsHandling": "css" },
+    "LocalNotifications": { "smallIcon": "ic_stat_notify", "iconColor": "#7c4dff" }
+  }
+}

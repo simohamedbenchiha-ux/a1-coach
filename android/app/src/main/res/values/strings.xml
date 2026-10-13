@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">A1 Coach</string>
+    <string name="title_activity_main">A1 Coach</string>
+    <string name="package_name">io.github.simohamedbenchihaux.a1coach</string>
+    <string name="custom_url_scheme">io.github.simohamedbenchihaux.a1coach</string>
+</resources>
