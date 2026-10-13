@@ -141,6 +141,9 @@ Motifs de refus fréquents, et ce qui est déjà fait :
 - **5.2.1, marques** : pas de « Goethe » ni de « Start Deutsch » dans le nom ou les mots-clés, mention de
   non-affiliation dans la description et dans l'appli (Réglages → À propos).
 - **5.1.1, confidentialité** : politique en ligne, textes clairs pour le micro et la reconnaissance vocale.
+- **ITMS-91053, manifeste de confidentialité manquant** (refus dès l'envoi, avant la revue) : le projet
+  contient `PrivacyInfo.xcprivacy` (aucune donnée collectée, pas de pistage, dates de fichiers justifiées),
+  et la CI vérifie qu'il est bien dans l'appli compilée.
 
 ## 4. Mettre à jour l'appli ensuite
 

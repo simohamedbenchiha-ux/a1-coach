@@ -108,6 +108,10 @@ Ne jamais cacher un bouton micro, ni rendre une fonction dépendante de la dict�
   Android vient de la CI (`A1_VERSION_CODE`).
 - Une nouvelle permission ou donnée traitée impose de mettre à jour `privacy.html` et `store/fiche-store.md`.
   Ne pas réintroduire `SCHEDULE_EXACT_ALARM` (refus Google Play pour une appli qui n'est pas un réveil).
+- iOS : `ios/App/App/PrivacyInfo.xcprivacy` déclare les API « à justifier » (aujourd'hui : dates de fichiers,
+  via @capacitor/filesystem, raison C617.1). Avant d'ajouter un plugin natif, chercher dans ses sources iOS
+  UserDefaults, creationDate/modificationDate, systemUptime, volumeAvailableCapacity, activeInputModes et
+  compléter le manifeste, sinon App Store Connect refuse l'envoi (ITMS-91053). La CI iOS vérifie sa présence.
 
 ## Fonctions liées à claude.ai
 
