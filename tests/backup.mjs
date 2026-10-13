@@ -1,6 +1,7 @@
 // Tests : accueil au premier lancement, À propos, sauvegarde / restauration (dont fichier piégé), PDF.
 import pw from 'playwright';
 import { readFileSync, writeFileSync } from 'node:fs';
+const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version; // même valeur que APP_VERSION
 const { chromium } = pw;
 const [FILE, OUT] = process.argv.slice(2);
 let fails = 0;
@@ -24,7 +25,7 @@ ok(!(await page.locator('#onb').evaluate(d => d.open)), 'accueil non réaffiché
 // --- À propos
 await page.click('.settings summary'); await page.waitForTimeout(200);
 const about = await page.locator('#about').innerText();
-ok(/non affiliée au Goethe-Institut/.test(about) && /1\.2\.0/.test(about), 'À propos : version + non-affiliation');
+ok(/non affiliée au Goethe-Institut/.test(about) && about.includes(VERSION), 'À propos : version + non-affiliation');
 ok((await page.getAttribute('#privacyLink', 'href')).endsWith('/privacy.html'), 'lien vers la politique de confidentialité');
 
 // --- sauvegarde
