@@ -1,0 +1,64 @@
+# Appli Android : un APK de test à chaque modification, et l'AAB signé pour le Play Store
+# quand la clé de signature est enregistrée dans les secrets du dépôt (voir STORE.md).
+name: Android
+
+on:
+  push:
+    branches: [main]
+    paths: [src/**, index.html, privacy.html, vendor/**, android/**, scripts/build-app.mjs, package.json, package-lock.json, capacitor.config.json, .github/workflows/android.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash   # active pipefail : un échec dans « commande | tail » fait échouer l'étape
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      A1_VERSION_CODE: ${{ github.run_number }}
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Dépendances
+        run: npm ci
+      - name: Préparer l'appli (www) et le projet Android
+        run: |
+          node scripts/build-app.mjs
+          npx cap sync android
+      - name: APK de test (installable directement)
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: a1-coach-test-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Clé de signature
+        if: env.HAS_KEY == 'true'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
+      - name: AAB signé pour le Play Store
+        if: env.HAS_KEY == 'true'
+        working-directory: android
+        env:
+          A1_KEYSTORE: ${{ runner.temp }}/upload.jks
+          A1_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          A1_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          A1_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          name: a1-coach-play-store-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
