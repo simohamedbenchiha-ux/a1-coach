@@ -1,0 +1,133 @@
+/* Langues d'explication. L'allemand de l'examen (questions, consignes, onglets) ne change jamais ;
+   l'interface et les explications suivent LANG. Le français est la référence : chaque clé de I18N.fr.ui
+   doit exister dans les autres langues (vérifié par les tests). Contenu traduit : I18N.<code>.q / v / sp / fm / wr
+   (src/lang/*.js), indexé par les identifiants stables de data.js ; le français reste dans data.js.
+   Une valeur peut être une fonction de variables, pour les pluriels (l'arabe a un duel). */
+const LANGS=[
+  {id:"fr",name:"Français",flag:"🇫🇷",dir:"ltr",de:"Französisch",locale:"fr-FR"},
+  {id:"en",name:"English",flag:"🇬🇧",dir:"ltr",de:"Englisch",locale:"en-GB"},
+  {id:"ar",name:"العربية",flag:"🌐",dir:"rtl",de:"Arabisch (Hocharabisch)",locale:"ar"},
+  {id:"ary",name:"الدارجة",flag:"🇲🇦",dir:"rtl",de:"Marokkanisches Arabisch (Darija) in arabischer Schrift",locale:"ar-MA"},
+  {id:"ary-Latn",name:"Darija (3arbizi)",flag:"🇲🇦",dir:"ltr",de:"Marokkanisches Arabisch (Darija) in lateinischer Schrift (Arabizi, mit Zahlen wie 3, 7, 9)",locale:"ar-MA"},
+  {id:"es",name:"Español",flag:"🇪🇸",dir:"ltr",de:"Spanisch",locale:"es-ES"},
+  {id:"it",name:"Italiano",flag:"🇮🇹",dir:"ltr",de:"Italienisch",locale:"it-IT"}
+];
+const I18N={};
+const pl=(n,one,many)=>n>1?many:one; // pluriel simple (français, anglais, espagnol, italien)
+I18N.fr={ui:{
+  "set.title":"⚙️ Réglages","set.lang":"Langue des explications","set.level":"Niveau","set.color":"Couleur de ligne","set.theme":"Thème",
+  "set.offline":"Appli hors ligne","set.install":"📲 Installer sur cet appareil","set.progress":"Ma progression",
+  "set.reminder":"Rappel quotidien","set.reminderHour":"Heure du rappel","set.about":"À propos",
+  "set.onbAgain":"👋 Revoir l'accueil","set.privacy":"🔒 Confidentialité","level.soon":"bientôt",
+  "board.format":"Format officiel 2026","board.original":"Textes originaux de niveau A1",
+  "board.noDate":"Date d'examen ci-dessous","board.past":"Examen passé",
+  "meter.aria":"Niveau de préparation","meter.start":"Réponds à quelques questions pour lancer le diagnostic.",
+  "meter.untested":"pas encore testé","meter.more":v=>`Encore ${v.n} épreuve${v.n>1?"s":""} à tester pour un diagnostic complet.`,
+  "meter.priority":v=>`Priorité : ${v.list}.`,"meter.allOk":"Au-dessus du seuil partout. Fais une Modellprüfung complète.",
+  "foot.note":"La barre verticale de chaque jauge marque 60 %, le seuil de réussite. « Wortschatz » et « Grammatik » ne sont pas des épreuves officielles : ils consolident les bases. Le Wortschatz suit l'organisation de la Wortliste officielle Start Deutsch 1 (thèmes et groupes de mots). Utiliser « Hilfe » compte pour une demi-réponse. Ta progression reste enregistrée dans ce navigateur.",
+  "mission.done":v=>`Mission ${v.m} terminée`,
+  "bk.save":"💾 Sauvegarder","bk.load":"📂 Restaurer",
+  "bk.stats":v=>`${v.q} question${v.q>1?"s":""} et ${v.v} mot${v.v>1?"s":""} déjà travaillés`,
+  "bk.last":v=>`Dernière sauvegarde : ${v.d}.`,"bk.none":"Pas encore de sauvegarde. Garde une copie pour changer d'appareil ou passer à l'appli.",
+  "bk.cancelled":"Sauvegarde annulée.","bk.failed":"La sauvegarde n'a pas abouti.","bk.notOurs":"Ce fichier n'est pas une sauvegarde A1 Coach.",
+  "bk.confirm":v=>`Sauvegarde du ${v.d} : ${v.stats}. Elle remplacera ta progression actuelle sur cet appareil.`,
+  "bk.replace":"Remplacer","common.cancel":"Annuler","bk.restored":"Progression restaurée.",
+  "notif.denied":"Notifications refusées : active-les dans les réglages du téléphone pour recevoir le rappel.",
+  "notif.body":"Tes révisions du jour t'attendent : 10 minutes suffisent. Los geht's!","notif.off":"Désactivé","notif.at":v=>`Chaque jour à ${v.h} h`,
+  "about":v=>`A1 Coach ${v.v}${v.app?" · appli":""}. Application indépendante, non affiliée au Goethe-Institut ; « Goethe-Zertifikat » et « Start Deutsch » sont des marques du Goethe-Institut. Tous les textes d'entraînement sont originaux. Ta progression reste sur cet appareil.`,
+  "install.tip":"Elle s'ouvre en plein écran et marche sans réseau (sauf la correction par Claude et la dictée).",
+  "install.ios":"Sur iPhone ou iPad : bouton Partager, puis « Sur l'écran d'accueil ».","install.done":"Appli installée",
+  "onb.title":"Prêt pour le Start Deutsch 1 ?","onb.p1t":"Un plan chaque jour","onb.p1":"missions courtes et révisions au bon moment, juste avant d'oublier",
+  "onb.p2t":"Le format officiel","onb.p2":"Hören, Lesen, Schreiben, Sprechen, examen blanc chronométré et PDF",
+  "onb.p3t":"Ta progression","onb.p3":"jauge par épreuve et courbe jusqu'au jour J","onb.date":"Date de ton examen",
+  "onb.noDate":"Pas encore de date ? Laisse vide, tu pourras l'ajouter plus tard.","onb.notif":"Me rappeler de m'entraîner chaque jour à 19 h",
+  "onb.go":"C'est parti","onb.legal":"Application indépendante, non affiliée au Goethe-Institut. Textes d'entraînement originaux.",
+  "audio.unavailable":"Audio indisponible sur cet appareil","chip.review":"↻ Révision","help.btn":"🇫🇷 Hilfe",
+  "err.emptyT":"Fehlerheft vide. Bravo !","err.empty":"Toutes tes erreurs ont été corrigées deux fois de suite. Retour au Training normal.",
+  "err.banner":v=>`Fehlerheft · ${v.n} question${v.n>1?"s":""} à revoir`,"err.quit":"Quitter","err.rule":"Une question sort du Fehlerheft quand tu la réussis deux fois.",
+  "tr.plays":v=>`À l'examen : ${v.n===1?"une seule écoute":"deux écoutes"}. Ici, écoute autant que tu veux.`,
+  "fb.again":"Cette question reviendra bientôt.","fb.helpUsed":"Aide utilisée : la question reviendra pour la valider sans traduction.",
+  "kbd.ios":"Touche le champ de texte, puis le micro 🎤 du clavier, et parle allemand. Si le texte sort en français, passe au clavier allemand avec 🌐 (à ajouter une fois : Réglages → Général → Clavier → Claviers).",
+  "kbd.android":"Touche le champ de texte, puis le micro 🎤 du clavier, et parle allemand. Si le texte sort en français, ajoute l'allemand aux langues du clavier (Gboard : ⚙️ → Langues).",
+  "kbd.mac":"Clique dans le champ de texte et lance la dictée du Mac (touche 🎤 ou Fn deux fois), réglée en allemand.",
+  "kbd.win":"Clique dans le champ de texte et lance la dictée de Windows (⊞ Win + H), réglée en allemand.",
+  "kbd.other":"Clique dans le champ de texte et utilise la dictée de ton appareil, réglée en allemand.",
+  "mic.notAllowed":"La dictée intégrée n'a pas accès au micro ici.","mic.serviceNotAllowed":"La dictée intégrée n'est pas disponible ici.",
+  "mic.noMic":"Aucun micro détecté sur cet appareil.","mic.noSpeech":"Je n'ai rien entendu. Rapproche-toi du micro et réessaie.",
+  "mic.network":"La dictée a besoin d'une connexion internet.","mic.stopped":"La dictée s'est arrêtée. Réessaie.",
+  "sp.hintApiAI":"Le micro transcrit ce que tu dis pendant les 30 secondes : tu pourras ensuite le faire corriger par Claude.",
+  "sp.hintApiCmp":"Le micro transcrit ce que tu dis pendant les 30 secondes : tu pourras ensuite le comparer au modèle.",
+  "sp.hintKbdAI":"Pour faire corriger ta réponse orale : « 🎙️ Dicter » plus bas, avec le micro de ton clavier.",
+  "sp.hintKbdCmp":"Pour comparer au modèle ta réponse orale : « 🎙️ Dicter » plus bas, avec le micro de ton clavier.",
+  "sp.summaryAI":"✍️ Écrire ou 🎙️ dicter ma réponse et la faire corriger par Claude","sp.summaryCmp":"✍️ Écrire ou 🎙️ dicter ma réponse pour la comparer au modèle",
+  "sp.placeholder":"Écris ou dicte ici ce que tu dirais, en allemand…","sp.correct":"Faire corriger","sp.compare":"Comparer au modèle","sp.dictate":"🎙️ Dicter",
+  "sp.transcribedAI":"Ta réponse est transcrite plus bas : fais-la corriger par Claude.","sp.transcribedCmp":"Ta réponse est transcrite plus bas : compare-la au modèle.",
+  "sp.listening":"🎙️ J'écoute…","sp.writeFirst":"Écris ou dicte d'abord ta réponse.","sp.yours":"Ta réponse",
+  "sp.compareTip":"Compare-la à la Musterlösung : as-tu donné les mêmes informations ? Le verbe est-il en 2e position ? Puis évalue-toi avec « Hat es geklappt? ».",
+  "sw.tip":"Astuce : recopie exactement les mots du texte.","sw.ai":"✨ Correction détaillée par Claude",
+  "sw.estimate":"Estimation par mots-clés : à l'examen, deux correcteurs notent aussi la correction de la langue.",
+  "heute.streak":v=>`🔥 ${v.n} jour${v.n>1?"s":""} d'affilée`,"heute.missions":"Missions du jour","heute.done":v=>`${v.d} / ${v.n} terminées`,
+  "heute.metro":"Ligne jusqu'à l'examen",
+  "mis.q":"20 questions adaptatives","mis.v":"15 mots","mis.s":"3 cartes d'oral","mis.w":"1 formulaire ou e-mail","mis.e":"1 examen complet",
+  "phase.noneT":"Pas encore de date","phase.none":"Indique la date de ton examen en haut de la page pour un plan jour par jour.",
+  "phase.pastT":"Examen passé","phase.past":"Tu peux continuer à t'entraîner pour garder ton niveau.",
+  "phase.todayT":"Jour J","phase.today":"Rien de nouveau aujourd'hui : relis ta présentation (Sprechen Teil 1) et un modèle d'e-mail. Viel Erfolg !",
+  "phase.p3T":"Phase 3 · Simulation","phase.p3":"Une Modellprüfung complète par jour, puis le Fehlerheft. Dors bien la veille.",
+  "phase.p2T":"Phase 2 · Formats","phase.p2":"Entraîne chaque partie dans son format officiel : Training, Schreiben et Sprechen tous les jours.",
+  "phase.p1T":"Phase 1 · Bases","phase.p1":"Vocabulaire et grammaire chaque jour, puis découvre les formats d'examen dans le Training.",
+  "rev.title":"Révisions du jour","rev.count":v=>`${v.n} à revoir`,
+  "rev.text":v=>`${[v.v?`${v.v} mot${v.v>1?"s":""}`:"",v.q?`${v.q} question${v.q>1?"s":""}`:""].filter(Boolean).join(" et ")} ${v.v+v.q>1?"reviennent":"revient"} aujourd'hui, juste avant que tu ${v.v+v.q>1?"les ":"l'"}oublies.`,
+  "rev.none":"Rien à revoir aujourd'hui. Chaque réponse programme automatiquement sa prochaine révision.","rev.tomorrow":v=>` Demain : ${v.n}.`,
+  "rev.words":v=>`Revoir ${v.n} mot${v.n>1?"s":""}`,"rev.questions":v=>`Revoir ${v.n} question${v.n>1?"s":""}`,
+  "prog.title":"Progression","prog.sub":"score par épreuve, jour après jour","prog.values":"Voir les valeurs",
+  "prog.empty":"La courbe apparaît dès tes premières réponses en Hören, Lesen, Schreiben ou Sprechen.",
+  "prog.tomorrow":"Reviens demain : la courbe se dessine jour après jour.","prog.threshold":"seuil 60 %","prog.today":"auj.","prog.todayLong":"aujourd'hui",
+  "prog.aria":"Courbe de progression par épreuve, détail dans le tableau des valeurs","prog.day":"Jour",
+  "tip.title":v=>`Conseil du jour : ${v.s}`,"tip.text":v=>`C'est ta partie la plus faible (${v.p} %). Une session de plus aujourd'hui fera la différence.`,"tip.btn":v=>`Travailler ${v.s}`,
+  "err.count":v=>`${v.n} question${v.n>1?"s":""}`,"err.has":"Les questions que tu as ratées, à revoir jusqu'à deux bonnes réponses de suite.",
+  "err.none":"Aucune erreur en attente. Les questions ratées apparaîtront ici.","err.go":"Revoir mes erreurs",
+  "ai.unavail":"La correction par Claude n'est pas disponible ici.","ai.rate":"Trop de demandes pour le moment. Réessaie dans quelques minutes.",
+  "ai.refused":"Claude n'a pas pu traiter ce texte. Reformule-le.","ai.session":"Reconnecte-toi à Claude, puis réessaie.","ai.failed":"La correction n'a pas abouti. Réessaie.",
+  "ai.needClaude":"La correction par Claude fonctionne quand l'appli est ouverte dans claude.ai ou dans l'app Claude.",
+  "ai.writeFirst":"Écris d'abord ton e-mail (au moins une phrase par point).","ai.correcting":"Claude corrige ton e-mail… (environ 20 secondes)",
+  "ai.title":"Correction par Claude","ai.corrected":"Ton texte corrigé","ai.estimate":"Estimation : à l'examen, deux correcteurs notent ton texte.",
+  "ai.speakFirst":"Écris ce que tu dirais à voix haute, en une ou plusieurs phrases.","ai.listening":"Claude écoute ta réponse…","ai.corr":"Corrigé","ai.alt":"Autre possibilité",
+  "chat.intro":"Claude te pose des questions simples sur un thème, comme à l'oral. Il corrige tes fautes au passage et lit ses réponses à voix haute.",
+  "chat.introApi":" Appuie sur 🎙️ pour lui répondre à voix haute : ta phrase part dès que tu as fini.",
+  "chat.introKbd":" Pour lui répondre à voix haute, appuie sur 🎙️ : tu dicteras avec le micro de ton clavier.",
+  "chat.aria":"Ta réponse","chat.mic":"Répondre à voix haute","chat.empty":"Choisis un thème puis appuie sur « Gespräch starten ».",
+  "chat.needClaude":"Le partenaire de conversation fonctionne quand l'appli est ouverte dans claude.ai ou dans l'app Claude.",
+  "v.theme":"Thème","v.mastered":v=>`${v.m} / ${v.n} mots maîtrisés`,"v.masteredAria":v=>`${v.p} % maîtrisés`,"v.knew":"Tu le savais ?",
+  "v.tip":"Astuce : apprends toujours le nom avec son article et sa couleur (der bleu, die rouge, das vert).",
+  "pdf.noLib":"Le module PDF n'a pas pu se charger. Vérifie ta connexion et recharge la page.","pdf.making":"Création du PDF…",
+  "pdf.readyShare":"PDF prêt : choisis où l'enregistrer ou l'imprimer.","pdf.ready":"PDF prêt. Ouvre-le et choisis « Imprimer » pour l'avoir sur papier.",
+  "pdf.newEach":" Chaque clic crée un nouveau sujet.","pdf.cancelled":"Téléchargement annulé.",
+  "pdf.busy":"Une fenêtre de téléchargement est déjà ouverte. Réessaie dans un instant.","pdf.failed":"Le téléchargement n'a pas abouti.",
+  "pdf.why":"Pourquoi c'est la bonne réponse.","pdf.models":"Exemples de réponses de niveau A1.","pdf.key":"Corrigé",
+  "exam.same":"Même déroulé que l'examen officiel. Pas d'aide dans ta langue, pas de correction avant la fin.","exam.selfEval":"Teil 1–3, auto-évaluation",
+  "exam.scale":"Barème officiel : chaque module sur 15, multiplié par 1,66. Total sur 100, réussite à partir de 60.",
+  "exam.paper":"Version papier · PDF A4","exam.paperDesc":"Un nouveau sujet complet à imprimer : couverture avec barème, Hören, Lesen, Schreiben, cartes d'oral et feuille de réponses.",
+  "exam.withSol":"Avec corrigé, transcriptions audio et modèles",
+  "exam.speakIntro":"Parle à voix haute pour chaque carte (environ 1 minute), puis évalue-toi honnêtement.","exam.how":"Comment ça s'est passé ?",
+  "res.written":v=>`Partie écrite : ${v.w} / 75. Il te faut au moins ${v.need} points sur 25 à l'oral pour réussir.`,
+  "res.pass":"Tu dépasses le seuil de 60 points.","res.fail":v=>`Il manque ${v.n} points. Tes erreurs reviennent en priorité dans le Training.`,
+  "res.perTeil":"Détail par Teil","res.write":v=>`Formular : ${v.f}/5 · E-Mail : ≈ ${v.m}/10 (estimation par mots-clés)`,
+  "res.expFail":"Les erreurs ci-dessous reviendront en priorité."
+}};
+/* langue de départ : choix enregistré, sinon celle de l'appareil (ar-MA → Darija), sinon anglais */
+function pickLang(saved){if(LANGS.some(l=>l.id===saved))return saved;
+  for(const n of (navigator.languages||[navigator.language||""])){const c=String(n).toLowerCase();
+    if(c==="ar-ma")return "ary";const b=c.split("-")[0];if(LANGS.some(l=>l.id===b))return b}
+  return "en"}
+let LANG="fr";
+const langInfo=()=>LANGS.find(l=>l.id===LANG)||LANGS[0];
+const pack=()=>I18N[LANG]||I18N.fr;
+function t(k,v){let s=pack().ui&&pack().ui[k];if(s===undefined)s=I18N.fr.ui[k];if(s===undefined)return k;return typeof s==="function"?s(v||{}):s}
+/* contenu traduit, avec repli sur le français de data.js */
+const tq=q=>{const x=LANG!=="fr"&&pack().q&&pack().q[q.id];return x?{fr:x[0],x:x[1]}:{fr:q.fr,x:q.x}};
+const tv=w=>LANG!=="fr"&&pack().v&&pack().v[w.id]||w.f;
+const tsp=(n,i,it)=>LANG!=="fr"&&pack().sp&&pack().sp[`${n}_${i}`]||it.fr;
+const tfm=(i,F)=>LANG!=="fr"&&pack().fm&&pack().fm[i]||F.fr;
+const twr=(i,w)=>{const x=LANG!=="fr"&&pack().wr&&pack().wr[i];return x?{fr:x[0],pts:x.slice(1)}:{fr:w.fr,pts:w.pts.map(p=>p[1])}};
+/* texte arabe : on oriente chaque élément selon son contenu (l'allemand reste de gauche à droite) */
+const dirOf=s=>/[؀-ۿ]/.test(String(s))?"rtl":"ltr";

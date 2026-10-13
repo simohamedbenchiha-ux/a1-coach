@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Start Deutsch 1 Coach</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Space+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Kufi+Arabic:wght@700;800&family=Noto+Sans+Arabic:wght@400;600;700&display=swap">
 <meta name="theme-color" content="#eceefb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#050713" media="(prefers-color-scheme: dark)">
 <!--pwa : retiré du fichier unique par scripts/build.mjs (l'artifact claude.ai ne peut pas être installé)-->
@@ -23,35 +23,39 @@
   <header class="board" id="board">
     <div class="boardTop"><span class="lineBadge">A1</span><span class="boardTitle">Start Deutsch 1 Coach</span>
     <details class="settings">
-      <summary>⚙️ Réglages</summary>
+      <summary data-i18n="set.title">⚙️ Réglages</summary>
       <div class="setPanel">
-        <div class="label">Couleur de ligne</div>
+        <div class="label" data-i18n="set.lang">Langue des explications</div>
+        <div class="swatches langPick" id="langs"></div>
+        <div class="label" data-i18n="set.level">Niveau</div>
+        <div class="swatches" id="levels"></div>
+        <div class="label" data-i18n="set.color">Couleur de ligne</div>
         <div class="swatches" id="palettes"></div>
-        <div class="label">Thème</div>
+        <div class="label" data-i18n="set.theme">Thème</div>
         <div class="swatches" id="modes"></div>
-        <div id="installBox" hidden><div class="label">Appli hors ligne</div>
-          <button class="sw" id="installBtn" hidden>📲 Installer sur cet appareil</button>
+        <div id="installBox" hidden><div class="label" data-i18n="set.offline">Appli hors ligne</div>
+          <button class="sw" id="installBtn" hidden data-i18n="set.install">📲 Installer sur cet appareil</button>
           <p class="small" id="installTip" style="margin:6px 0 0"></p></div>
-        <div class="label">Ma progression</div>
-        <div class="swatches"><button class="sw" id="bkSave">💾 Sauvegarder</button><button class="sw" id="bkLoad">📂 Restaurer</button></div>
+        <div class="label" data-i18n="set.progress">Ma progression</div>
+        <div class="swatches"><button class="sw" id="bkSave" data-i18n="bk.save">💾 Sauvegarder</button><button class="sw" id="bkLoad" data-i18n="bk.load">📂 Restaurer</button></div>
         <input type="file" id="bkFile" accept=".json,application/json" hidden>
         <p class="small" id="bkMsg" style="margin:0" hidden></p>
         <div id="bkConfirm" class="bkConfirm" hidden></div>
-        <div id="notifBox" hidden><div class="label">Rappel quotidien</div>
-          <div class="swatches"><select id="notifTime" aria-label="Heure du rappel"></select></div></div>
-        <div class="label">À propos</div>
+        <div id="notifBox" hidden><div class="label" data-i18n="set.reminder">Rappel quotidien</div>
+          <div class="swatches"><select id="notifTime" aria-label="Heure du rappel" data-i18n-aria="set.reminderHour"></select></div></div>
+        <div class="label" data-i18n="set.about">À propos</div>
         <p class="small" style="margin:0" id="about"></p>
-        <div class="swatches"><button class="sw" id="onbAgain">👋 Revoir l'accueil</button><a class="sw" id="privacyLink" target="_blank" rel="noopener" href="https://simohamedbenchiha-ux.github.io/a1-coach/privacy.html">🔒 Confidentialité</a></div>
+        <div class="swatches"><button class="sw" id="onbAgain" data-i18n="set.onbAgain">👋 Revoir l'accueil</button><a class="sw" id="privacyLink" target="_blank" rel="noopener" href="https://simohamedbenchiha-ux.github.io/a1-coach/privacy.html" data-i18n="set.privacy">🔒 Confidentialité</a></div>
       </div>
     </details></div>
     <div class="boardRows" id="boardRows" aria-live="polite"></div>
-    <div class="boardMeta"><span>Goethe-Zertifikat <b>A1</b></span><span>Format officiel 2026</span><span>Textes originaux de niveau A1</span></div>
+    <div class="boardMeta"><span>Goethe-Zertifikat <b>A1</b></span><span data-i18n="board.format">Format officiel 2026</span><span data-i18n="board.original">Textes originaux de niveau A1</span></div>
   </header>
 
-  <section class="meter" aria-label="Niveau de préparation">
+  <section class="meter" aria-label="Niveau de préparation" data-i18n-aria="meter.aria">
     <div class="meterHead">
       <div><div class="label">Prüfungsbereit</div><div class="big" id="overall">–</div></div>
-      <div class="verdict" id="verdict">Réponds à quelques questions pour lancer le diagnostic.</div>
+      <div class="verdict" id="verdict" data-i18n="meter.start">Réponds à quelques questions pour lancer le diagnostic.</div>
     </div>
     <div class="bars" id="bars"></div>
     <div class="examRow"><label for="examDate">Prüfungstermin</label><input type="date" id="examDate"><span id="countdown"></span></div>
@@ -69,26 +73,35 @@
   <main id="panel"></main>
   <dialog class="onb" id="onb" aria-labelledby="onbTitle">
     <form method="dialog" class="card">
+      <div class="swatches langPick" id="onbLangs"></div>
       <div class="label">Willkommen</div>
-      <h2 id="onbTitle">Prêt pour le Start Deutsch 1 ?</h2>
+      <h2 id="onbTitle" data-i18n="onb.title">Prêt pour le Start Deutsch 1 ?</h2>
       <ul class="onbList">
-        <li><b>Un plan chaque jour</b><span class="small">missions courtes et révisions au bon moment, juste avant d'oublier</span></li>
-        <li><b>Le format officiel</b><span class="small">Hören, Lesen, Schreiben, Sprechen, examen blanc chronométré et PDF</span></li>
-        <li><b>Ta progression</b><span class="small">jauge par épreuve et courbe jusqu'au jour J</span></li>
+        <li><b data-i18n="onb.p1t">Un plan chaque jour</b><span class="small" data-i18n="onb.p1">missions courtes et révisions au bon moment, juste avant d'oublier</span></li>
+        <li><b data-i18n="onb.p2t">Le format officiel</b><span class="small" data-i18n="onb.p2">Hören, Lesen, Schreiben, Sprechen, examen blanc chronométré et PDF</span></li>
+        <li><b data-i18n="onb.p3t">Ta progression</b><span class="small" data-i18n="onb.p3">jauge par épreuve et courbe jusqu'au jour J</span></li>
       </ul>
-      <label class="label" for="onbDate">Date de ton examen</label>
+      <label class="label" for="onbDate" data-i18n="onb.date">Date de ton examen</label>
       <input type="date" id="onbDate">
-      <p class="small" style="margin:0">Pas encore de date ? Laisse vide, tu pourras l'ajouter plus tard.</p>
-      <label class="onbNotif" id="onbNotifRow" hidden><input type="checkbox" id="onbNotif" checked> Me rappeler de m'entraîner chaque jour à 19 h</label>
-      <button class="btn shine" id="onbGo" value="go" autofocus>C'est parti</button>
-      <p class="small legal" style="margin:0">Application indépendante, non affiliée au Goethe-Institut. Textes d'entraînement originaux.</p>
+      <p class="small" style="margin:0" data-i18n="onb.noDate">Pas encore de date ? Laisse vide, tu pourras l'ajouter plus tard.</p>
+      <label class="onbNotif" id="onbNotifRow" hidden><input type="checkbox" id="onbNotif" checked> <span data-i18n="onb.notif">Me rappeler de m'entraîner chaque jour à 19 h</span></label>
+      <button class="btn shine" id="onbGo" value="go" autofocus data-i18n="onb.go">C'est parti</button>
+      <p class="small legal" style="margin:0" data-i18n="onb.legal">Application indépendante, non affiliée au Goethe-Institut. Textes d'entraînement originaux.</p>
     </form>
   </dialog>
-  <p class="small">La barre verticale de chaque jauge marque 60 %, le seuil de réussite. « Wortschatz » et « Grammatik » ne sont pas des épreuves officielles : ils consolident les bases. Le Wortschatz suit l'organisation de la Wortliste officielle Start Deutsch 1 (thèmes et groupes de mots). Utiliser « Hilfe » compte pour une demi-réponse. Ta progression reste enregistrée dans ce navigateur.</p>
+  <p class="small" data-i18n="foot.note">La barre verticale de chaque jauge marque 60 %, le seuil de réussite. « Wortschatz » et « Grammatik » ne sont pas des épreuves officielles : ils consolident les bases. Le Wortschatz suit l'organisation de la Wortliste officielle Start Deutsch 1 (thèmes et groupes de mots). Utiliser « Hilfe » compte pour une demi-réponse. Ta progression reste enregistrée dans ce navigateur.</p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/motion@12.23.12/dist/motion.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="src/data.js"></script>
+<script src="src/levels.js"></script>
+<script src="src/i18n.js"></script>
+<script src="src/lang/en.js"></script>
+<script src="src/lang/ar.js"></script>
+<script src="src/lang/ary.js"></script>
+<script src="src/lang/ary-Latn.js"></script>
+<script src="src/lang/es.js"></script>
+<script src="src/lang/it.js"></script>
 <script src="src/app.js"></script>
 <script src="src/pdf.js"></script>
 </body>

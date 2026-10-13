@@ -9,6 +9,11 @@ Ouvre `index.html` dans ton navigateur. Aucune installation n'est nécessaire.
 
 ## Nouveautés
 
+- **7 langues d'explication** : français, anglais, arabe, darija en lettres arabes ou en lettres latines
+  (3arbizi), espagnol, italien (Réglages → Langue des explications). L'allemand de l'examen ne change pas ;
+  l'arabe et la darija s'affichent de droite à gauche.
+- **Niveaux** : A1 aujourd'hui ; A2, B1, B2, C1 et C2 sont prévus (voir NIVEAUX.md). Comptes et abonnement :
+  voir ABONNEMENT.md.
 - **Révisions au bon moment** : chaque mot et question revient 1, 3, 7 puis 14 jours plus tard (toujours
   avant l'examen). Le plan du jour indique ce qu'il faut revoir aujourd'hui.
 - **Courbe de progression** : ton score par épreuve, jour après jour, jusqu'à la date d'examen.

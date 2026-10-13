@@ -68,7 +68,8 @@ EXAMEN BLANC
 • Sujet complet en PDF à imprimer, avec ou sans corrigé
 
 FAIT POUR TOI
-• Explications en français, exercices en allemand
+• Explications au choix en français, anglais, arabe, darija (lettres arabes ou latines),
+  espagnol ou italien ; exercices en allemand
 • Rappel quotidien à l'heure de ton choix
 • Fonctionne sans connexion, sans compte, sans publicité
 • Ta progression reste sur ton téléphone ; sauvegarde-la dans un fichier quand tu veux
@@ -83,6 +84,7 @@ au Goethe-Institut. « Goethe-Zertifikat » et « Start Deutsch » sont des marq
 ```
 Première version : plan du jour, révisions espacées, quatre épreuves, dictée vocale en allemand,
 examen blanc avec PDF, rappel quotidien et mode hors ligne.
+(Version 1.3 : explications en 7 langues, dont l'arabe et la darija ; mise en page de droite à gauche.)
 ```
 
 ## Images (dossier `store/`)

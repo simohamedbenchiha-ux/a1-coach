@@ -86,18 +86,18 @@ function makeExamPDF(JsPDF,withSol){
       const labels=k.q.rf!==undefined?["R","F"]:k.q.ab?["a","b"]:["a","b","c"];labels.forEach((l,j)=>{check(x+9+j*12,y+4);font(9.5);doc.text(l,x+13.5+j*12,y+4)});if(c===2||i===14)y+=9});y+=4});
   /* Lösungen */
   if(withSol){
-    section("Lösungen","Corrigé · Transkripte · Muster");
+    section("Lösungen",t("pdf.key")+" · Transkripte · Muster");
     ["Hören","Lesen"].forEach(sec=>{font(12,"bold",BR);ensure(12);doc.text(sec,M,y+4);y+=8;
       key.filter(k=>k.sec===sec).forEach((k,i)=>{const c=i%5,x=M+c*(CW/5);if(c===0)ensure(7);font(10,"bold");doc.text(`${k.nr}`,x,y+4);font(10);doc.text(k.ans,x+7,y+4);if(c===4||i===14)y+=7});y+=4});
     teilHead("Transkripte Hören","Diese Texte vorlesen lassen, wenn du ohne App übst.");
     key.filter(k=>k.sec==="Hören").forEach(k=>{ensure(10);write(`${k.nr}.  ${k.q.audio}`,10,"normal",{after:2})});
-    teilHead("Erklärungen","Pourquoi c'est la bonne réponse.");
-    key.forEach(k=>write(`${k.sec} ${k.nr}: ${k.q.x}`,9.5,"normal",{after:1}));
+    teilHead("Erklärungen",t("pdf.why"));
+    key.forEach(k=>write(`${k.sec} ${k.nr}: ${tq(k.q).x}`,9.5,"normal",{after:1}));
     y+=3;teilHead("Schreiben Teil 1 · Lösung","Ein Punkt pro richtiges Feld.");
     F.f.forEach((f,i)=>write(`${i+1}  ${f[0]}: ${Array.isArray(f[1])?f[1][0]:f[1]}`,10,"normal",{after:0.5}));
     y+=3;teilHead("Schreiben Teil 2 · Musterlösung","Bewertet werden: alle drei Punkte, Anrede und Gruß, verständliche Sätze.");
     const MB=boxOf(Wt.model,{fill:true});ensure(MB.h);MB.draw(y);y+=MB.h+5;
-    teilHead("Sprechen · Musterantworten","Exemples de réponses de niveau A1.");
+    teilHead("Sprechen · Musterantworten",t("pdf.models"));
     [1,2,3].forEach(k=>sp[k].forEach(it=>{write(it.p.replace(/\n/g," – "),10,"bold",{after:0.5});write(it.m,10,"normal",{indent:4,after:3})}));
   }
   /* footer */

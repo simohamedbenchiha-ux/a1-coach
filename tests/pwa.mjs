@@ -9,7 +9,7 @@ const srv = spawn('python3', ['-I', '-m', 'http.server', String(PORT), '--bind',
 await new Promise(r => setTimeout(r, 900));
 const browser = await chromium.launch();
 try {
-  const ctx = await browser.newContext({ viewport: { width: 400, height: 900 } });
+  const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 400, height: 900 } });
   await ctx.addInitScript(() => { if (!localStorage.getItem('a1coach')) localStorage.setItem('a1coach', JSON.stringify({ onboarded: true })); });
   const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
   await page.goto(URL, { waitUntil: 'load' });
@@ -20,8 +20,8 @@ try {
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload({ waitUntil: 'networkidle' });             // 2e passage en ligne : polices mises en cache
   ok(await page.evaluate(() => !!navigator.serviceWorker.controller), 'service worker actif et contrôle la page');
-  const keys = await page.evaluate(async () => (await (await caches.open('a1coach-v1')).keys()).map(r => r.url));
-  ok(['/src/app.js', '/src/data.js', '/index.html', 'motion.js', 'jspdf.umd.min.js'].every(k => keys.some(u => u.endsWith(k))), `cache : ${keys.length} fichiers dont l'appli, Motion et jsPDF`);
+  const keys = await page.evaluate(async () => { const v = (await caches.keys()).find(k => k.startsWith('a1coach-')); return (await (await caches.open(v)).keys()).map(r => r.url); });
+  ok(['/src/app.js', '/src/data.js', '/src/i18n.js', '/src/lang/ar.js', '/index.html', 'motion.js', 'jspdf.umd.min.js'].every(k => keys.some(u => u.endsWith(k))), `cache : ${keys.length} fichiers dont l'appli, les langues, Motion et jsPDF`);
   ok(keys.some(u => u.includes('fonts.gstatic.com')), 'polices mises en cache');
   // hors ligne
   await ctx.setOffline(true);
@@ -39,7 +39,7 @@ try {
   ok(errs.length === 0, 'aucune erreur JS ' + errs.join(' ; '));
   await ctx.close();
   // fichier unique (artifact) : rien de la PWA
-  const p2 = await browser.newPage(); await p2.addInitScript(() => localStorage.setItem('a1coach', JSON.stringify({ onboarded: true }))); await p2.goto('file://' + DIST); await p2.waitForTimeout(800);
+  const p2 = await browser.newPage({ locale: 'fr-FR' }); await p2.addInitScript(() => localStorage.setItem('a1coach', JSON.stringify({ onboarded: true }))); await p2.goto('file://' + DIST); await p2.waitForTimeout(800);
   const d = await p2.evaluate(() => ({ man: !!document.querySelector('link[rel="manifest"]'), pwa: PWA, box: document.querySelector('#installBox').hidden }));
   ok(!d.man && !d.pwa && d.box, 'fichier unique : pas de manifeste, PWA inactive, rien d\'affiché');
 } finally { await browser.close(); srv.kill(); }

@@ -20,7 +20,7 @@ if (/https?:\/\/(fonts\.googleapis|cdn\.jsdelivr|cdnjs\.cloudflare)/.test(html))
 rmSync(www, { recursive: true, force: true });
 mkdirSync(new URL("src/", www), { recursive: true });
 writeFileSync(new URL("index.html", www), html);
-for (const f of ["styles.css", "data.js", "app.js", "pdf.js"]) cpSync(new URL("src/" + f, root), new URL("src/" + f, www));
+cpSync(new URL("src/", root), new URL("src/", www), { recursive: true }); // données, langues, appli, PDF, styles
 cpSync(new URL("vendor/", root), new URL("vendor/", www), { recursive: true });
 cpSync(new URL("node_modules/@capacitor/core/dist/capacitor.js", root), new URL("vendor/capacitor.js", www));
 cpSync(new URL("privacy.html", root), new URL("privacy.html", www));

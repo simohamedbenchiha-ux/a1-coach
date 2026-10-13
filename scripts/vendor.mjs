@@ -18,9 +18,9 @@ mkdirSync(new URL("fonts/", out), { recursive: true });
 writeFileSync(new URL("motion.js", out), await get(MOTION));
 writeFileSync(new URL("jspdf.umd.min.js", out), await get(JSPDF));
 
-// on garde les alphabets latin et latin-ext (allemand et français), pas le cyrillique ni le vietnamien
+// alphabets gardés : latin et latin-ext (allemand, français…) et arabe (arabe, Darija), pas le cyrillique ni le vietnamien
 const css = await get(FONTS);
-const blocks = [...css.matchAll(/\/\* ([\w-]+) \*\/\s*(@font-face\s*{[^}]+})/g)].filter(m => m[1] === "latin" || m[1] === "latin-ext");
+const blocks = [...css.matchAll(/\/\* ([\w-]+) \*\/\s*(@font-face\s*{[^}]+})/g)].filter(m => ["latin", "latin-ext", "arabic"].includes(m[1]));
 let local = "/* Polices embarquées (scripts/vendor.mjs) : " + new Date().toISOString().slice(0, 10) + " */\n";
 const saved = new Map(); // polices variables : plusieurs graisses partagent le même fichier
 for (const [, subset, face] of blocks) {

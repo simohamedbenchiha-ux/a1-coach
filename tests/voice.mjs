@@ -27,7 +27,7 @@ const fake = mode => {
 
 const browser = await chromium.launch();
 const open = async mode => {
-  const ctx = await browser.newContext({ viewport: { width: 400, height: 1100 }, deviceScaleFactor: 2 });
+  const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 400, height: 1100 }, deviceScaleFactor: 2 });
   await ctx.addInitScript(fake, mode);
   await ctx.addInitScript(() => { if (!localStorage.getItem('a1coach')) localStorage.setItem('a1coach', JSON.stringify({ onboarded: true })); });
   const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
@@ -79,7 +79,7 @@ const open = async mode => {
 }
 // 3) Appli installée sur iPhone : pas de dictée intégrée -> mode clavier avec l'aide iPhone
 {
-  const b2 = browser; const ctx = await b2.newContext({ viewport: { width: 390, height: 1000 }, isMobile: true, hasTouch: true,
+  const b2 = browser; const ctx = await b2.newContext({ locale: 'fr-FR', viewport: { width: 390, height: 1000 }, isMobile: true, hasTouch: true,
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
   await ctx.addInitScript(fake, 'none');
   await ctx.addInitScript(() => { if (!localStorage.getItem('a1coach')) localStorage.setItem('a1coach', JSON.stringify({ onboarded: true })); });

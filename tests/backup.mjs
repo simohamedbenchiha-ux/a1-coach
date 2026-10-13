@@ -7,7 +7,7 @@ let fails = 0;
 const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 const day = n => new Date(Date.now() + n * 864e5).toLocaleDateString('sv');
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 390, height: 860 }, deviceScaleFactor: 2, acceptDownloads: true });
+const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 390, height: 860 }, deviceScaleFactor: 2, acceptDownloads: true });
 const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
 await page.goto('file://' + FILE); await page.waitForTimeout(1500);
 

@@ -1,14 +1,18 @@
 # Start Deutsch 1 Coach
 
-App web d'entraînement à l'examen **Goethe-Zertifikat A1 : Start Deutsch 1** pour un apprenant francophone.
-Questions et consignes en allemand (niveau A1), explications et interface en français.
+App web d'entraînement à l'examen **Goethe-Zertifikat A1 : Start Deutsch 1**.
+Questions et consignes en allemand (niveau A1) ; interface et explications dans la langue choisie :
+français (référence), anglais, arabe, Darija en lettres arabes, Darija en lettres latines (arabizi), espagnol, italien.
 
 ## Structure
 
 ```
 index.html          page (en-tête « tableau des départs », jauge, navigation, <main id="panel">)
 src/styles.css      tokens de design + composants (thème clair/sombre, palettes)
-src/data.js         tout le contenu : Q, TEIL, SPEAK, FORMS, WRITE, VOC/WORDS
+src/data.js         tout le contenu : Q, TEIL, SPEAK, FORMS, WRITE, VOC/WORDS (explications en français)
+src/levels.js       LEVELS : catalogue A1 → C2 et format d'examen de chaque niveau (seul A1 est prêt, voir NIVEAUX.md)
+src/i18n.js         LANGS, I18N.fr (textes d'interface de référence), t(), tq/tv/tsp/tfm/twr (contenu traduit)
+src/lang/*.js       une langue par fichier : ui + q + v + sp + fm + wr, indexés par identifiants stables
 src/app.js          état, répétition espacée, rendu des onglets, Motion, dictée, Claude (sample),
                     Heute (missions, révisions, courbe), Fehlerheft, PWA
 src/pdf.js          makeExamPDF() : sujet imprimable avec jsPDF
@@ -23,11 +27,13 @@ scripts/vendor.mjs      télécharge Motion, jsPDF et les polices dans vendor/ (
 android/, ios/          projets natifs générés puis ajustés (permissions, icônes) : commités
 store/                  icônes sources, captures, textes et questionnaires des stores (fiche-store.md)
 STORE.md                guide de publication pas à pas
+NIVEAUX.md              ajouter A2 → C2 ; ABONNEMENT.md : phase 2 (comptes Supabase + abonnement RevenueCat)
 .github/workflows/      android.yml (APK de test, AAB signé si secrets) ; ios.yml (compilation, TestFlight)
 ```
 
 Pas de framework, pas d'étape de compilation : ouvrir `index.html` dans un navigateur suffit.
-Les scripts sont des scripts classiques qui partagent leurs `const` globales ; l'ordre de chargement compte (data → app → pdf).
+Les scripts sont des scripts classiques qui partagent leurs `const` globales ; l'ordre de chargement compte
+(data → levels → i18n → lang/* → app → pdf). Un fichier de langue ne déclare rien au niveau global (tout dans une IIFE).
 Bibliothèques par CDN : Motion 12.23.12 (`window.Motion`) et jsPDF 2.5.1 (`window.jspdf`).
 
 ## Format officiel à respecter (règlement Goethe du 1/9/2023)
@@ -37,7 +43,23 @@ Bibliothèques par CDN : Motion 12.23.12 (`window.Motion`) et jsPDF 2.5.1 (`wind
 - Schreiben : formulaire 5 points + e-mail ~30 mots sur 10 points.
 - Sprechen : Teil 1 /3, Teil 2 /6, Teil 3 /6.
 - Chaque module /15 × 1,66 → total /100, réussite à 60.
-Ces règles vivent dans `TEIL` (data.js) et dans `startFull()` / `finishFull()` (app.js).
+Ces règles vivent dans `TEIL` (data.js) et dans l'entrée A1 de `LEVELS` (levels.js), lue par `exam()`,
+`startFull()` et `finishFull()` (app.js). Ajouter un niveau : suivre NIVEAUX.md.
+
+## Langues (i18n)
+
+- Tout texte d'interface passe par `t("clé", {variables})` ; les textes statiques de `index.html` portent
+  `data-i18n` / `data-i18n-aria`. Une nouvelle clé s'ajoute à `I18N.fr.ui` **et** dans chaque `src/lang/*.js`
+  (même type : texte ou fonction ; une fonction gère les pluriels, l'arabe a un duel). `npm test` (suite i18n)
+  refuse une langue incomplète.
+- Le contenu se lit par `tq(q)` (traduction + explication), `tv(mot)`, `tsp`, `tfm`, `twr`. Une nouvelle
+  question ou un nouveau mot doit être traduit dans chaque langue (même identifiant).
+- L'allemand ne se traduit jamais (questions, consignes, onglets, Hilfe, Fehlerheft…) et porte `lang="de"`.
+- Arabe et Darija (lettres arabes) : `dir="rtl"` sur `<html>`. Utiliser des propriétés CSS logiques
+  (`inset-inline-start`, `padding-inline`, `text-align:start`), jamais left/right pour un texte. Les blocs
+  mixtes (allemand dans une phrase arabe) ont `unicode-bidi:plaintext`. Pas de `letter-spacing` en arabe.
+- Le PDF (jsPDF, polices sans arabe) prend les explications anglaises quand la langue est en RTL.
+- Les traductions arabes et Darija sont à faire relire par un locuteur natif avant publication.
 
 ## Ajouter du contenu (data.js)
 
@@ -69,6 +91,8 @@ d'accent `--brand2`. Toute surface qui porte du texte `--brandInk` utilise `--gr
 garder le contraste AA. Polices : Unbounded (titres, gros chiffres), Space Grotesk (UI, questions, mots du
 Wortschatz, chiffres tabulaires, volets), Atkinson Hyperlegible (texte de lecture). Ne pas mettre Unbounded
 sur les mots allemands : trop large, les noms longs se coupent en plein milieu.
+Arabe : Noto Kufi Arabic (titres) et Noto Sans Arabic (texte), placées après les polices latines dans chaque
+pile, pour que l'allemand garde sa police.
 
 ## Animations (Motion)
 
@@ -80,7 +104,8 @@ Les animations répondent à une action (réponse, onglet, mission) ; seule exce
 `localStorage["a1coach"]` : `box` (Leitner par id), `due` (date de prochaine révision par id, `AAAA-MM-JJ`),
 `hist` (scores récents par compétence), `snap` (score par épreuve et par jour, pour la courbe, 180 jours max),
 `err` (Fehlerheft), `day` + `streak` (missions du jour), `exam` (date), `pal`/`mode` (design),
-`onboarded` (accueil vu), `lastBackup` (date de sauvegarde), `notif` (heure du rappel, appli seulement).
+`onboarded` (accueil vu), `lastBackup` (date de sauvegarde), `notif` (heure du rappel, appli seulement),
+`lang` (langue des explications), `level` (niveau choisi, A1 par défaut).
 Un nouveau champ d'état doit aussi être ajouté à `cleanState()` (restauration d'une sauvegarde), sinon il est perdu.
 Toujours lire/écrire dans un try/catch.
 
@@ -131,8 +156,8 @@ nouvelle version de bibliothèque ou de police : garder ces URL identiques à ce
 
 ## Vérifier un changement
 
-1. `node --check src/data.js src/pdf.js` (et ouvrir `index.html`, console sans erreur).
+1. `node --check src/*.js src/lang/*.js` puis `npm test` (et ouvrir `index.html`, console sans erreur).
 2. Parcourir les 6 onglets, répondre à une question, lancer l'Express et générer un PDF.
-3. Tester en largeur téléphone (390 px) et en thème sombre.
+3. Tester en largeur téléphone (390 px), en thème sombre, et en arabe (mise en page de droite à gauche).
 4. Après un changement de `sw.js` ou des fichiers listés : servir le dossier (`python3 -m http.server`),
    ouvrir `http://localhost:8000`, recharger une fois, couper le réseau et recharger.

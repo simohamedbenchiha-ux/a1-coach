@@ -7,7 +7,7 @@ const errors = [];
 let fails = 0;
 // 1) Long German nouns on the flashcard: do they overflow the card at phone widths?
 for (const w of [360, 390]) {
-  const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+  const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: w, height: 900 } });
   await page.addInitScript(() => localStorage.setItem('a1coach', JSON.stringify({ onboarded: true })));
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });

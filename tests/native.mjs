@@ -32,7 +32,7 @@ const fakeCap = () => {
 const calls = (page, n, m) => page.evaluate(([n, m]) => window.__calls.filter(c => c[0] === n && (!m || c[1] === m)), [n, m]);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 390, height: 900 }, colorScheme: 'dark' });
+const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 390, height: 900 }, colorScheme: 'dark' });
 await ctx.addInitScript(fakeCap);
 const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e)));
 await page.goto('file://' + FILE); await page.waitForTimeout(1200);

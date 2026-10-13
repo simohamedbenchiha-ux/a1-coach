@@ -17,7 +17,7 @@ const seeded = { box: {}, hist: [{ s: 'H', v: 1 }, { s: 'H', v: 1 }], exam: day(
 
 const browser = await chromium.launch();
 for (const scheme of ['light', 'dark']) {
-  const ctx = await browser.newContext({ viewport: { width: 760, height: 1300 }, deviceScaleFactor: 2, colorScheme: scheme });
+  const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 760, height: 1300 }, deviceScaleFactor: 2, colorScheme: scheme });
   await ctx.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('a1coach', s); sessionStorage.setItem('seeded', '1'); } }, JSON.stringify(seeded));
   const page = await ctx.newPage();
   const errs = []; page.on('pageerror', e => errs.push(String(e)));
