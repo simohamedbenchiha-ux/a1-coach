@@ -674,7 +674,7 @@ function wortschatz(){
    <div class="row" style="justify-content:space-between"><span class="small">${t("v.mastered",{m:s.m,n:s.n})}</span><span class="small">${th.n}${th.g?" · Wortgruppe":""}</span></div>
    <div class="progress" role="img" aria-label="${t("v.masteredAria",{p:s.pct})}"><span style="width:${s.pct}%"></span></div>`;
   let body="";
-  const wordHtml=(showArt)=>`${picHtml(typeof IMG!=="undefined"&&IMG.word(x.w),"word")}<p class="${wordCls(x.w)}">${x.a&&showArt?`<span class="art art-${x.a}">${esc(x.a)}</span> `:""}${esc(x.w)}</p>${x.p&&showArt?`<p class="plural">Plural: ${/^\(/.test(x.p)?esc(x.p):"die "+esc(x.p)}</p>`:""}`;
+  const wordHtml=(showArt)=>`${picHtml(typeof IMG!=="undefined"&&IMG.word(x.w),"wpic")}<p class="${wordCls(x.w)}">${x.a&&showArt?`<span class="art art-${x.a}">${esc(x.a)}</span> `:""}${esc(x.w)}</p>${x.p&&showArt?`<p class="plural">Plural: ${/^\(/.test(x.p)?esc(x.p):"die "+esc(x.p)}</p>`:""}`;
   if(vMode==="karten"){
     body=`${wordHtml(true)}<div class="row" style="justify-content:center"><button class="btn ghost" id="say">🔊 Anhören</button><button class="btn" id="flip">Umdrehen</button></div><div id="back"></div>`;
   }else if(vMode==="bedeutung"){

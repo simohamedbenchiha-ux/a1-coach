@@ -41,6 +41,7 @@ async function ctxWith({ cfg = true, state, lang = 'fr', offline = false } = {})
 const open = async ctx => { const p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto('file://' + FILE); await p.waitForTimeout(700); p.errs = errs; return p; };
 const gate = p => p.evaluate(() => !document.querySelector('#authGate').hidden);
+const entered = p => p.waitForFunction(() => authUser && document.querySelector('#authGate').hidden, null, { timeout: 8000 }).catch(() => {});
 const msg = p => p.evaluate(() => document.querySelector('#authMsg').textContent);
 
 // 1. sans configuration : pas d'écran de connexion
@@ -59,7 +60,7 @@ ok(/Confirme d'abord/.test(await msg(p)), 'connexion avant confirmation refusée
 await p.evaluate(() => fakesb.confirm('lea@example.com'));
 await p.fill('#authPw', 'mauvais-mdp'); await p.click('#authGo'); await p.waitForTimeout(200);
 ok(/incorrect/.test(await msg(p)), 'mauvais mot de passe refusé');
-await p.fill('#authPw', 'motdepasse1'); await p.click('#authGo'); await p.waitForTimeout(800);
+await p.fill('#authPw', 'motdepasse1'); await p.click('#authGo'); await entered(p); await p.waitForTimeout(300);
 ok(!(await gate(p)), 'connecté : écran de connexion fermé');
 ok(await p.evaluate(() => document.querySelector('#onb').open), 'premier lancement : accueil affiché après la connexion');
 await p.click('#onbGo'); await p.waitForTimeout(300);
@@ -71,15 +72,16 @@ ok(/lea@example.com/.test(await p.textContent('#accWho')), 'Réglages → Mon co
 await p.screenshot({ path: OUT + '/auth-account.png' });
 
 // 3. rechargement : session gardée, pas d'écran de connexion
-await p.reload(); await p.waitForTimeout(900);
+await p.reload(); await entered(p);
 ok(!(await gate(p)), 'session gardée après rechargement');
+if (await gate(p)) console.log('DEBUG', await p.evaluate(() => JSON.stringify({ keys: Object.keys(localStorage), url: location.href, s: localStorage.getItem('fakesb-session'), u: typeof authUser, mode: authMode, msg: document.querySelector('#authMsg').textContent, calls: fakesb.db().calls })));
 
 // 4. deuxième appareil avec sa propre progression : fusion
 const db = await p.evaluate(() => localStorage.getItem('fakesb'));
 const ctx2 = await ctxWith({ state: { box: { v_person0: 3 }, hist: [{ s: 'V', v: 1 }], onboarded: true } });
 await ctx2.addInitScript(d => { if (!localStorage.getItem('fakesb')) localStorage.setItem('fakesb', d); }, db);
 const p2 = await open(ctx2);
-await p2.fill('#authEmail', 'lea@example.com'); await p2.fill('#authPw', 'motdepasse1'); await p2.click('#authGo'); await p2.waitForTimeout(900);
+await p2.fill('#authEmail', 'lea@example.com'); await p2.fill('#authPw', 'motdepasse1'); await p2.click('#authGo'); await entered(p2); await p2.waitForTimeout(300);
 const merged = await p2.evaluate(() => JSON.parse(localStorage.getItem('a1coach')).box);
 ok(merged.v_person0 === 3 && Object.keys(merged).length === 2, 'deuxième appareil : progressions fusionnées (' + JSON.stringify(merged) + ')');
 ok(!(await p2.evaluate(() => document.querySelector('#onb').open)), 'deuxième appareil : pas d\'accueil (déjà fait)');
