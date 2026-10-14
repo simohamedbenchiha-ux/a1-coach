@@ -4,7 +4,7 @@
    donc une modification des fichiers arrive au chargement suivant sans rien changer ici.
    Augmenter VERSION seulement quand la liste SHELL ou CDN change. */
 const VERSION = "a1coach-v3";
-const SHELL = ["./", "index.html", "src/styles.css", "src/data.js", "src/levels.js", "src/i18n.js", "src/lang/en.js", "src/lang/ar.js", "src/lang/ary.js",
+const SHELL = ["./", "index.html", "src/styles.css", "src/data.js", "src/levels.js", "src/img.js", "src/i18n.js", "src/lang/en.js", "src/lang/ar.js", "src/lang/ary.js",
   "src/lang/es.js", "src/lang/it.js", "src/config.js", "src/auth.js", "src/app.js", "src/pdf.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 const CDN = ["https://cdn.jsdelivr.net/npm/motion@12.23.12/dist/motion.js",

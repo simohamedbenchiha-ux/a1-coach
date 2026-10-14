@@ -46,7 +46,14 @@ Bibliothèques par CDN : Motion 12.23.12 (`window.Motion`) et jsPDF 2.5.1 (`wind
 - Lesen : Teil 1 = 5 Richtig/Falsch (e-mails), Teil 2 = 5 choix a/b entre deux annonces, Teil 3 = 5 Richtig/Falsch (panneaux).
 - Schreiben : formulaire 5 points + e-mail ~30 mots sur 10 points.
 - Sprechen : Teil 1 /3, Teil 2 /6, Teil 3 /6.
-- Chaque module /15 × 1,66 → total /100, réussite à 60.
+- Chaque module /15 × 1,66 → total /100, réussite à 60 (telc publie le même barème sur 60, réussite à 36).
+- Examen blanc complet, comme le cahier et l'enregistrement officiels (analysés sur un Übungstest telc) :
+  un « Beispiel » résolu au début de chaque Teil (`beispiel()`), 7 s de lecture puis lecture automatique du
+  texte, deux fois en Teil 1 et 3 (`examAudio()`) ; dialogues lus à deux voix (répliques séparées par « – »).
+- Schreiben Teil 2 : 3 points par point de contenu + 1 pour la forme (Anrede 0,5 + Gruß 0,5). Teil 1 : une faute
+  d'orthographe est tolérée si le mot reste reconnaissable, jamais dans un nombre (`fieldOk()`).
+- Sprechen : grille officielle (Teil 1 : vorstellen / buchstabieren / Zahlen, 1 point chacun ; Teil 2 et 3 :
+  deux cartes, question ou demande 2 points + réponse ou réaction 1 point).
 Ces règles vivent dans `TEIL` (data.js) et dans l'entrée A1 de `LEVELS` (levels.js), lue par `exam()`,
 `startFull()` et `finishFull()` (app.js). Ajouter un niveau : suivre NIVEAUX.md.
 

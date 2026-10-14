@@ -234,11 +234,18 @@ function tick(el,to,fmt){if(!el)return;fmt=fmt||(v=>String(v));if(!canMove()){el
 let rate=.85;
 /* Synthèse vocale : dans l'appli, voix natives du système (la WebView Android n'a pas speechSynthesis ;
    sur iPhone, « playback » joue même en mode silencieux). Sur le web, Web Speech API. */
-function hush(){try{speechSynthesis.cancel()}catch(e){}const t=plug("TextToSpeech");if(t)t.stop().catch(()=>{})}
-function speak(t){const tts=plug("TextToSpeech");
-  if(tts){tts.speak({text:t,lang:"de-DE",rate,category:"playback",queueStrategy:0}).catch(()=>{});return true}
-  try{const u=new SpeechSynthesisUtterance(t);u.lang="de-DE";u.rate=rate;
-  const v=speechSynthesis.getVoices().find(v=>/^de/i.test(v.lang));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u);return true}catch(e){return false}}
+let speakId=0;
+function hush(){speakId++;try{speechSynthesis.cancel()}catch(e){}const t=plug("TextToSpeech");if(t)t.stop().catch(()=>{})}
+/* Voix : un dialogue (répliques séparées par « – ») est lu à deux voix, comme à l'examen (deux voix allemandes
+   si l'appareil en a deux, sinon une voix plus grave pour la 2e personne). done() : appelé à la fin de la lecture. */
+const turnsOf=s=>String(s).split(/\s+[–—]\s+/).map(x=>x.trim()).filter(Boolean);
+function speak(text,done){const id=++speakId,parts=turnsOf(text),fin=()=>{if(id===speakId&&done)done()},tts=plug("TextToSpeech");
+  if(tts){(async()=>{for(let i=0;i<parts.length;i++){if(id!==speakId)return;
+      try{await tts.speak({text:parts[i],lang:"de-DE",rate,pitch:i%2?.8:1,category:"playback",queueStrategy:0})}catch(e){return}}fin()})();return true}
+  try{const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));speechSynthesis.cancel();
+    parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);u.lang="de-DE";u.rate=rate;
+      const v=vs.length>1?vs[i%2]:vs[0];if(v)u.voice=v;if(vs.length<2&&i%2)u.pitch=.75;
+      if(i===parts.length-1)u.onend=u.onerror=fin;speechSynthesis.speak(u)});return true}catch(e){return false}}
 const rateLabel=()=>`Tempo: ${rate<1?"langsam":"normal"}`;
 
 /* question helpers */
@@ -251,9 +258,10 @@ const teilName=q=>q.p==="G"?"Grammatik":`${SK[q.s]} Teil ${q.p[1]}`;
 function qBody(q,training){
   let h=`<div class="meta"><span class="chip">${teilName(q)}</span><span class="chip">${esc(q.t)}</span>${training?`<span class="chip ${(st.box[q.id]||0)===0&&st.hist.length?"hot":""}">Box ${(st.box[q.id]||0)}/4</span>${isDue(q.id)?`<span class="chip">${t("chip.review")}</span>`:""}`:""}</div>`;
   h+=`<p class="instr">${TEIL[q.p].i}</p>`;
-  if(q.audio)h+=`<div class="row"><button class="btn mark" id="play">▶ Hören</button><button class="btn ghost" id="rate">${rateLabel()}</button></div>`;
+  if(q.audio)h+=`<div class="row"><button class="btn mark" id="play">▶ Hören</button><button class="btn ghost" id="rate">${rateLabel()}</button></div>${training?"":`<p class="status" id="hStat" lang="de" role="status"></p>`}`;
   if(q.mail)h+=`<div class="mail">${esc(q.mail)}</div>`;
-  if(q.ab)h+=`<p class="q" lang="de">${esc(q.q)}</p><div class="ab">${q.ab.map((t,i)=>`<div class="sign"><b>${"ab"[i]}</b>${esc(t)}</div>`).join("")}</div>`;
+  if(q.ab)h+=`<p class="q" lang="de">${esc(q.q)}</p><div class="ab">${q.ab.map((t,i)=>{const [l1,...r]=t.split("\n"),web=/^www\./.test(l1); // page web : barre d'adresse, comme dans le cahier
+    return web?`<div class="sign web"><b>${"ab"[i]}</b><div class="url" dir="ltr">${esc(l1)}</div>${esc(r.join("\n"))}</div>`:`<div class="sign"><b>${"ab"[i]}</b>${esc(t)}</div>`}).join("")}</div>`;
   else{if(q.sign)h+=`<div class="sign${q.pic?" withPic":""}" lang="de">${picHtml(q.pic)}<span>${esc(q.sign)}</span></div>`;else if(q.pic)h+=picHtml(q.pic,"big");h+=`<p class="q" lang="de">${fmtQ(q.q)}</p>`}
   if(training)h+=`<div><button class="btn help" id="help">${t("help.btn")}</button><p class="fr" id="frT" hidden>${esc(tq(q).fr)}</p></div>`;
   return h;
@@ -404,17 +412,26 @@ function sprechen(){
 const formHtml=F=>`<div class="mail">${esc(F.text)}</div><div class="form">${F.f.map((f,i)=>{const id="ff"+i;
   const ctrl=Array.isArray(f[1])?`<select id="${id}"><option value="">– bitte wählen –</option>${f[1].slice(1).map(o=>`<option>${esc(o)}</option>`).join("")}</select>`:`<input id="${id}" autocomplete="off">`;
   return `<div class="f" id="w${i}"><label for="${id}">${esc(f[0])}</label>${ctrl}</div>`}).join("")}</div>`;
+/* Formulaire : comme à l'examen, une faute d'orthographe est acceptée si le mot reste reconnaissable
+   (« Donerstag »), mais un nombre doit être exact. */
+const lev=(a,b)=>{const d=Array.from({length:b.length+1},(_,j)=>j);for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;
+  for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]};
+const fieldOk=(v,sol)=>{const a=norm(v),b=norm(sol);if(a===b)return true;if(/\d/.test(b)||b.length<4)return false;
+  return lev(a,b)<=(b.length>=8?2:1)};
 function gradeForm(F,show){let ok=0;
-  F.f.forEach((f,i)=>{const sol=Array.isArray(f[1])?f[1][0]:f[1],good=norm($("#ff"+i).value)===norm(sol);if(good)ok++;
+  F.f.forEach((f,i)=>{const sol=Array.isArray(f[1])?f[1][0]:f[1],good=fieldOk($("#ff"+i).value,sol);if(good)ok++;
     if(show){const row=$("#w"+i);row.className="f "+(good?"ok":"no");row.querySelector(".sol")?.remove();
       if(!good)row.insertAdjacentHTML("beforeend",`<span class="sol">Lösung: ${esc(sol)}</span>`)}});return ok}
 const mailHtml=w=>`<p class="q">${esc(w.task)}</p><p class="instr">Schreiben Sie zu jedem Punkt ein bis zwei Sätze (circa 30 Wörter). Vergessen Sie Anrede und Gruß nicht.</p><ul>${w.pts.map(p=>`<li>${esc(p[0])}</li>`).join("")}</ul>`;
+/* Barème officiel de Schreiben Teil 2 (Goethe et telc) : 3 points par point de contenu, 1 point pour la forme
+   (formule d'appel 0,5 + salutation finale 0,5), soit 10. Un texte trop court ne vaut que la moitié par point. */
 function gradeMail(w,t){const words=(t.match(/\S+/g)||[]).length;
-  const c=[["Anrede (Liebe/Lieber/Hallo/Sehr geehrte …)",/^\s*(liebe|lieber|hallo|hi|sehr geehrte)/i.test(t)],
-    ...w.pts.map(p=>[p[0],p[2].test(t)]),
-    ["Gruß am Ende (Viele Grüße, Bis bald …)",/grüße|gruß|bis bald|bis samstag|bis dann/i.test(t)],
-    [`Länge: ${words} Wörter (Ziel: 25–45)`,words>=25&&words<=45]];
-  return {c,sc:c.filter(x=>x[1]).length/c.length}}
+  const anr=/^\s*(liebe|lieber|hallo|hi|sehr geehrte)/i.test(t),gr=/grüße|grüßen|gruß|grüsse|bis bald|bis morgen|bis dann|bis samstag|tschüss/i.test(t);
+  const hit=w.pts.map(p=>p[2].test(t)),per=words<12?1.5:3;
+  const c=[["Anrede (Liebe/Lieber/Hallo/Sehr geehrte …)",anr],...w.pts.map((p,i)=>[p[0],hit[i]]),
+    ["Gruß am Ende (Viele Grüße, Bis bald …)",gr],[`Länge: ${words} Wörter (Ziel: etwa 30)`,words>=20&&words<=50]];
+  const pts=per*hit.filter(Boolean).length+(anr?.5:0)+(gr?.5:0);
+  return {c,sc:pts/10,pts}}
 const checkHtml=c=>`<ul class="check">${c.map(x=>`<li class="${x[1]?"ok":""}">${esc(x[0])}</li>`).join("")}</ul>`;
 
 let wPart=2,wIdx=0,fIdx=0;
@@ -726,7 +743,7 @@ const takeTeil=(p,n)=>shuffle(Q.filter(q=>q.p===p)).slice(0,n);
 const level=()=>levelOf(st.level),modOf=s=>level().modules.find(m=>m.s===s);
 function startFull(){
   ex={mode:"full",mods:level().modules.filter(m=>m.teile).map(m=>({s:m.s,qs:m.teile.flatMap(x=>takeTeil(x.p,x.n)),ms:m.min*6e4})),
-    m:0,i:0,ans:[],raw:{H:0,L:0,W:0,S:null}};
+    m:0,i:0,seq:0,ans:[],raw:{H:0,L:0,W:0,S:null}};
   modIntro();
 }
 function startExpress(){
@@ -747,10 +764,27 @@ function runMod(){const M=ex.mods[ex.m];ex.i=0;ex.end=Date.now()+M.ms;clearInter
 function examQ(){const M=ex.mods[ex.m];
   if(ex.i>=M.qs.length)return endMod();
   const q=M.qs[ex.i],opts=optsOf(q),ans=answerOf(q);
+  if(ex.mode==="full"&&!(ex.bsp=ex.bsp||{})[q.p]){ex.bsp[q.p]=1;return beispiel(q.p,M)}
   $("#panel").innerHTML=`<div class="card">${stepper()}<div class="row" style="justify-content:space-between"><span class="label">Aufgabe ${ex.i+1} / ${M.qs.length}</span><span class="timer" id="et" style="font-size:20px">${mmss(ex.end-Date.now())}</span></div>${qBody(q,false)}${optsHtml(q,opts)}</div>`;
   bindAudio(q,TEIL[q.p].plays);
-  $$(".opt").forEach(b=>b.onclick=()=>{ex.ans.push({q,ok:opts[b.dataset.i]===ans});ex.i++;examQ()});
+  $$(".opt").forEach(b=>b.onclick=()=>{hush();ex.ans.push({q,ok:opts[b.dataset.i]===ans});ex.i++;examQ()});
+  if(q.audio&&ex.mode==="full")examAudio(q);
 }
+/* Comme dans le cahier d'examen : chaque Teil commence par un exemple déjà résolu (« Beispiel »), hors barème. */
+function beispiel(p,M){const used=new Set(M.qs.map(x=>x.id)),pool=Q.filter(x=>x.p===p&&!used.has(x.id)),q=pool[Math.random()*pool.length|0];
+  if(!q)return examQ();const opts=optsOf(q),ans=answerOf(q);
+  $("#panel").innerHTML=`<div class="card bsp">${stepper()}<div class="row" style="justify-content:space-between"><span class="label">${SK[q.s]} Teil ${p[1]} · Beispiel</span><span class="timer" id="et" style="font-size:20px">${mmss(ex.end-Date.now())}</span></div>${qBody(q,false)}${optsHtml(q,opts)}<p class="small" lang="de">Lösung: <b>${esc(ans)}</b></p><div class="row"><button class="btn mark" id="bspGo">Weiter</button></div></div>`;
+  $$(".opt").forEach(b=>{b.disabled=true;if(opts[b.dataset.i]===ans)b.classList.add("right")});
+  const hs=$("#hStat");if(hs)hs.remove();bindAudio(q);$("#bspGo").onclick=()=>{hush();examQ()};$("#bspGo").focus()}
+/* Examen complet : déroulé de l'enregistrement officiel (mesuré sur un test d'entraînement) :
+   7 s pour lire la tâche, le texte (deux fois en Teil 1 et 3, avec une courte pause), puis le temps de répondre. */
+function examAudio(q){const tok=++ex.seq,plays=TEIL[q.p].plays||1,st=$("#hStat"),btn=$("#play"),alive=()=>ex&&ex.seq===tok;
+  if(!st||!btn)return;btn.hidden=true;$("#rate").hidden=true;let n=0,left=7;
+  const say=m=>{if(alive())st.textContent=m};
+  const play=()=>{if(!alive())return;n++;say(n===1?"🔊 Sie hören den Text.":"🔊 Sie hören den Text noch einmal.");
+    if(!speak(q.audio,()=>{if(!alive())return;if(n<plays){say("…");setTimeout(play,2500)}else say("✍️ Kreuzen Sie jetzt an.")})){btn.hidden=false;say("")}};
+  const tick=()=>{if(!alive())return;if(left<=0)return play();say(`⏳ Lesen Sie die Aufgabe: ${left} s`);left--;setTimeout(tick,1000)};
+  tick()}
 function endMod(){clearInterval(exT);hush();
   const M=ex.mods[ex.m];M.qs.slice(ex.i).forEach(q=>ex.ans.push({q,ok:false}));ex.i=M.qs.length;
   if(ex.mode==="express")return finishExpress();
@@ -772,14 +806,21 @@ function schreibenExam(){ex.stage="W";
 function submitW(){clearInterval(exT);
   const f=gradeForm(ex.F,false),g=gradeMail(ex.w,$("#txt").value),m=Math.round(g.sc*10);
   ex.W={f,m,c:g.c};ex.raw.W=f+m;record("W",(f+m)/15);sprechenExam()}
+/* Sprechen : grille officielle (Goethe et telc). Teil 1 : se présenter, épeler, un nombre (1 point chacun).
+   Teil 2 : deux cartes de thème, chacune une question (2) et une réponse (1). Teil 3 : deux cartes image,
+   chacune une demande (2) et une réaction (1). Total 15 ; chaque critère : réussi, à moitié, pas réussi. */
 function sprechenExam(){ex.stage="S";
-  const cards=[1,2,3].map(n=>{const P=SPEAK[n];return {n,P,it:P.items[Math.random()*P.items.length|0]}});
-  const lv=max=>max===3?[[0,"nicht geschafft"],[1.5,"teilweise"],[3,"gut"]]:[[0,"nicht geschafft"],[3,"teilweise"],[6,"gut"]];
+  const two=n=>{const it=shuffle(SPEAK[n].items),a=it[0],b=it.find(x=>x.p.split("\n")[0]!==a.p.split("\n")[0])||it[1];return [a,b]};
+  const t1=SPEAK[1].items[0],t2=two(2),t3=two(3);let k=0;
+  const row=(lab,max)=>{const id="sr"+k++;return `<div class="rate"><label for="${id}" class="small" lang="de">${lab}</label><select id="${id}" data-max="${max}">${[[0,"nicht geschafft"],[max/2,"teilweise"],[max,"gut"]].map(([v,l])=>`<option value="${v}">${l} (${String(v).replace(".",",")} P.)</option>`).join("")}</select></div>`};
+  const card=(it,cls)=>`<div class="sign${it.pic?" withPic":""}" lang="de">${picHtml(it.pic,"card")}<span>${esc(it.p)}</span></div>${it.hint?`<p class="instr" lang="de">${esc(it.hint)}</p>`:""}`;
   $("#panel").innerHTML=`<div class="card">${stepper()}<h2>Sprechen</h2><p class="small">${t("exam.speakIntro")}</p>
-   ${cards.map(c=>`<div class="label">${c.P.title} · ${c.P.max} Punkte</div><div class="sign${c.it.pic?" withPic":""}" lang="de">${picHtml(c.it.pic,"card")}<span>${esc(c.it.p)}</span></div>${c.it.hint?`<p class="instr" lang="de">${esc(c.it.hint)}</p>`:""}
-     <div class="rate"><label for="s${c.n}" class="small">${t("exam.how")}</label><select id="s${c.n}">${lv(c.P.max).map(([v,l])=>`<option value="${v}">${l} (${v} P.)</option>`).join("")}</select></div>`).join("")}
+   <div class="label">${SPEAK[1].title} · 3 Punkte</div>${card(t1)}<p class="instr" lang="de">Buchstabieren Sie Ihren Namen. Sagen Sie eine Zahl (Telefonnummer, Hausnummer).</p>
+   <p class="small">${t("exam.how")}</p>${row("Sich vorstellen",1)}${row("Buchstabieren",1)}${row("Zahlen",1)}
+   <div class="label">${SPEAK[2].title} · 6 Punkte</div>${t2.map((it,i)=>card(it)+row(`Frage ${i+1}`,2)+row(`Antwort ${i+1}`,1)).join("")}
+   <div class="label">${SPEAK[3].title} · 6 Punkte</div>${t3.map((it,i)=>card(it)+row(`Bitte ${i+1}`,2)+row(`Reaktion ${i+1}`,1)).join("")}
    <div class="row"><button class="btn mark" id="ev">Auswerten</button><button class="btn ghost" id="skip">Ohne Sprechen auswerten</button></div></div>`;
-  $("#ev").onclick=()=>{const s=[1,2,3].reduce((a,n)=>a+ +$("#s"+n).value,0);ex.raw.S=Math.round(s);record("S",s/15);finishFull()};
+  $("#ev").onclick=()=>{const s=[...$$("#panel select")].reduce((a,e)=>a+ +e.value,0);ex.raw.S=Math.round(s*2)/2;record("S",s/15);finishFull()};
   $("#skip").onclick=finishFull;
 }
 function grade(p){return p>=90?"sehr gut":p>=80?"gut":p>=70?"befriedigend":p>=60?"ausreichend":"nicht bestanden"}
@@ -787,7 +828,7 @@ function finishFull(){
   const LV=level(),R=ex.raw,pts=k=>R[k]===null?null:Math.round(R[k]*LV.factor*10)/10,P=LV.pass,max=modOf("H").max,wMax=Math.round(3*max*LV.factor);
   ex.ans.forEach(a=>record(a.q.s,a.ok?1:0,a.q.id));
   const written=pts("H")+pts("L")+pts("W"),total=R.S===null?null:Math.round(written+pts("S"));
-  const row=(k,label)=>`<tr><td>${label}</td><td class="n">${R[k]===null?"–":R[k]+" / "+modOf(k).max}</td><td class="n">${R[k]===null?"–":pts(k).toFixed(1)}</td></tr>`;
+  const row=(k,label)=>`<tr><td>${label}</td><td class="n">${R[k]===null?"–":String(R[k]).replace(".",",")+" / "+modOf(k).max}</td><td class="n">${R[k]===null?"–":pts(k).toFixed(1)}</td></tr>`;
   const perTeil=LV.modules.flatMap(m=>m.teile?m.teile.map(x=>x.p):[]).map(p=>{const a=ex.ans.filter(x=>x.q.p===p);return `<li class="${a.filter(x=>x.ok).length/a.length>=.6?"ok":""}">${SK[p[0]]} Teil ${p[1]}: ${a.filter(x=>x.ok).length}/${a.length}</li>`}).join("");
   const wrong=ex.ans.filter(a=>!a.ok).map(a=>`<li>${a.q.ab?esc(a.q.q):fmtQ(a.q.q)} → <b>${esc(answerOf(a.q))}</b><div class="small" dir="${dirOf(tq(a.q).x)}">${esc(tq(a.q).x)}</div></li>`).join("");
   const verdict=total===null?t("res.written",{w:Math.round(written),need:Math.max(0,P-Math.round(written))})

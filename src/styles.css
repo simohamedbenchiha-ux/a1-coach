@@ -395,3 +395,7 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .opt.picOpt{position:relative}
 .sign.withPic{display:flex;align-items:center;gap:14px}
 .sign.withPic>span:last-child{flex:1;min-width:0}
+/* Lesen Teil 2 : page web avec barre d'adresse */
+.sign.web .url{font:600 12.5px var(--ui);padding:5px 10px 5px 26px;margin:0 0 8px;border-radius:8px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--surface) 80%,transparent);position:relative;overflow-wrap:anywhere;text-align:left}
+.sign.web .url::before{content:"";position:absolute;left:9px;top:50%;width:8px;height:8px;margin-top:-5px;border:1.6px solid var(--muted);border-radius:50%}

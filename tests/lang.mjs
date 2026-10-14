@@ -34,7 +34,8 @@ for (const [id, dir] of ids) {
   await page.evaluate(() => { document.querySelector('.settings').open = false; });
   // examen complet : répondre au hasard jusqu'au résultat
   await page.click('[data-tab="exam"]'); await page.click('#full');
-  for (let k = 0; k < 2; k++) { await page.click('#go'); for (let i = 0; i < 15; i++) await page.click('.opt >> nth=0'); }
+  for (let k = 0; k < 2; k++) { await page.click('#go');
+    for (let i = 0; i < 15;) { if (await page.$('#bspGo')) { await page.click('#bspGo'); continue; } await page.click('.opt >> nth=0'); i++; } }
   await page.click('#done'); await page.click('#ev'); await page.waitForTimeout(300);
   const res = await page.evaluate(() => document.querySelector('#panel .big')?.textContent || '');
   check(/\/ 100$/.test(res), `${id} : examen complet → ${res}`);
