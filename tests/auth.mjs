@@ -2,9 +2,15 @@
 // connexion, envoi de la progression, fusion avec un deuxième appareil, mot de passe oublié,
 // suppression du compte, hors ligne, arabe. Sans configuration : aucun écran de connexion.
 import pw from 'playwright';
+import http from 'node:http';
+import { readFileSync } from 'node:fs';
 const { chromium } = pw;
 const FILE = process.argv[2], OUT = process.argv[3] || '.';
 const SB = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js';
+// servi en http comme un vrai site : le stockage local d'une page file:// est peu fiable au rechargement sous Chromium automatisé
+const server = http.createServer((q, r) => { r.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); r.end(readFileSync(FILE)); });
+await new Promise(ok => server.listen(0, '127.0.0.1', ok));
+const URL_ = `http://127.0.0.1:${server.address().port}/`;
 const browser = await chromium.launch();
 let fails = 0;
 const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
@@ -39,7 +45,7 @@ async function ctxWith({ cfg = true, state, lang = 'fr', offline = false } = {})
   return ctx;
 }
 const open = async ctx => { const p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto('file://' + FILE); await p.waitForTimeout(700); p.errs = errs; return p; };
+  await p.goto(URL_); await p.waitForTimeout(700); p.errs = errs; return p; };
 const gate = p => p.evaluate(() => !document.querySelector('#authGate').hidden);
 const entered = p => p.waitForFunction(() => authUser && document.querySelector('#authGate').hidden, null, { timeout: 8000 }).catch(() => {});
 const msg = p => p.evaluate(() => document.querySelector('#authMsg').textContent);
@@ -74,7 +80,6 @@ await p.screenshot({ path: OUT + '/auth-account.png' });
 // 3. rechargement : session gardée, pas d'écran de connexion
 await p.reload(); await entered(p);
 ok(!(await gate(p)), 'session gardée après rechargement');
-if (await gate(p)) console.log('DEBUG', await p.evaluate(() => JSON.stringify({ keys: Object.keys(localStorage), url: location.href, s: localStorage.getItem('fakesb-session'), u: typeof authUser, mode: authMode, msg: document.querySelector('#authMsg').textContent, calls: fakesb.db().calls })));
 
 // 4. deuxième appareil avec sa propre progression : fusion
 const db = await p.evaluate(() => localStorage.getItem('fakesb'));
@@ -101,7 +106,7 @@ await ctx.close();
   const q = await open(c);
   await q.click('#authForgot'); await q.fill('#authEmail', 'sam@example.com'); await q.click('#authGo'); await q.waitForTimeout(200);
   ok(/lien vient de partir/.test(await msg(q)), 'mot de passe oublié : e-mail envoyé');
-  await q.goto('about:blank'); await q.goto('file://' + FILE + '#access_token=x&type=recovery'); await q.waitForTimeout(900);
+  await q.goto('about:blank'); await q.goto(URL_ + '#access_token=x&type=recovery'); await q.waitForTimeout(900);
   ok(await q.evaluate(() => !document.querySelector('#authPwRow').hidden && document.querySelector('#authEmailRow').hidden), 'lien reçu : formulaire « nouveau mot de passe »');
   await q.fill('#authPw', 'nouveaumdp1'); await q.click('#authGo'); await q.waitForTimeout(900);
   const pwd = await q.evaluate(() => fakesb.db().users['sam@example.com'].password);
@@ -115,5 +120,5 @@ await ctx.close();
   ok(await q.evaluate(() => document.documentElement.dir === 'rtl' && /الدخول/.test(document.querySelector('#authTitle').textContent)), 'écran de connexion en arabe, de droite à gauche');
   await q.screenshot({ path: OUT + '/auth-ar.png' }); await c.close(); }
 
-await browser.close();
+await browser.close(); server.close();
 console.log(fails ? `${fails} ÉCHEC(S)` : 'TOUT PASSE');
