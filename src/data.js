@@ -367,7 +367,7 @@ const WRITE=[
   pts:[["Zimmer reservieren","Réservez une chambre",/zimmer|reservieren|buchen/i],["Wann? (Datum)","Donnez les dates",/\d|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember/i],["Preis?","Demandez le prix",/kostet|preis|wie viel|wieviel/i]],
   model:"Sehr geehrte Damen und Herren,\nich möchte ein Einzelzimmer vom 3. bis 5. Mai reservieren. Wie viel kostet das Zimmer pro Nacht?\nMit freundlichen Grüßen\nMohamed Benchiha"},
  {title:"Einladung von Lena",task:"Ihre Freundin Lena hat am Samstag Geburtstag und lädt Sie ein. Antworten Sie Lena.",fr:"Votre amie Lena vous invite à son anniversaire samedi. Répondez-lui.",
-  pts:[["Danke sagen","Remerciez-la",/danke/i],["Sie kommen.","Dites que vous venez",/komme gern|ich komme|gerne/i],["Was mitbringen?","Demandez ce que vous pouvez apporter",/mitbringen|bringen/i]],
+  pts:[["Danke sagen","Remerciez-la",/dank/i],["Sie kommen.","Dites que vous venez",/komme gern|ich komme|gerne/i],["Was mitbringen?","Demandez ce que vous pouvez apporter",/mitbringen|bringen/i]],
   model:"Liebe Lena,\nvielen Dank für die Einladung! Ich komme gern am Samstag. Was kann ich mitbringen? Vielleicht einen Kuchen?\nBis Samstag\nMohamed"},
  {title:"Heizung kaputt",task:"In Ihrer Wohnung ist die Heizung kaputt. Schreiben Sie an Ihre Vermieterin, Frau Schulz.",fr:"Le chauffage de votre appartement est en panne. Écrivez à votre propriétaire, Mme Schulz.",
   pts:[["Problem: Heizung","Décrivez le problème",/heizung|kaputt/i],["Bitte: Hilfe","Demandez de l'aide",/können sie|bitte|reparieren/i],["Wann haben Sie Zeit?","Dites quand vous êtes disponible",/uhr|montag|dienstag|mittwoch|donnerstag|freitag|samstag|morgen|zeit/i]],
