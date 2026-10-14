@@ -23,7 +23,7 @@ for (const w of [360, 390]) {
     el.parentNode.appendChild(probe);
     const bad = [];
     for (const x of WORDS) {
-      probe.textContent = x.w;               // the noun alone must fit on one line
+      probe.className = wordCls(x.w); probe.textContent = x.w; // the noun alone must fit on one line (long ones get .long)
       if (probe.scrollWidth > box) bad.push(x.w);
     }
     probe.remove();

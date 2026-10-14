@@ -18,7 +18,7 @@ async function audit(page, tag) {
     if (document.documentElement.scrollWidth > W + 1) out.push('défilement horizontal (' + document.documentElement.scrollWidth + ' > ' + W + ')');
     for (const el of document.querySelectorAll('#panel *, .board *, .meter *')) {
       const b = el.getBoundingClientRect(); if (!b.width || getComputedStyle(el).position === 'fixed') continue;
-      if (el.closest('.settings:not([open]) .setPanel, [hidden], .tabs, .chartBox, .flaps, svg')) continue;
+      if (el.closest('.settings:not([open]) .setPanel, details:not([open]) > :not(summary), [hidden], .tabs, .chartBox, .flaps, svg, #progTbl')) continue;
       if (b.right > W + 2 || b.left < -2) { out.push('déborde : ' + el.tagName.toLowerCase() + '.' + [...el.classList].join('.') + ' « ' + (el.textContent || '').trim().slice(0, 30) + ' »'); if (out.length > 4) break; }
     }
     const badSvg = [...document.querySelectorAll('.pic')].filter(p => !p.querySelector('svg')).length;

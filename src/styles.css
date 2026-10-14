@@ -238,6 +238,7 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .chipbtn[aria-pressed="true"]{background:linear-gradient(140deg,var(--mark),color-mix(in srgb,var(--mark) 65%,#fff));color:var(--markInk);border-color:transparent;box-shadow:0 0 16px -4px color-mix(in srgb,var(--mark) 80%,transparent)}
 /* Space Grotesk plutôt qu'Unbounded : les longs noms allemands (Telefonnummer…) tiennent sur une ligne */
 .word{font:700 clamp(30px,8.6vw,56px)/1.06 var(--ui);letter-spacing:-.03em;margin:0;text-align:center;overflow-wrap:anywhere}
+.word.long{font-size:clamp(22px,6.4vw,46px)}
 .word .art{font-weight:600}
 .art-der{color:var(--fr)}.art-die{color:var(--bad)}.art-das{color:var(--good)}
 .plural{text-align:center;font:500 15px var(--ui);color:var(--muted);margin:0}
@@ -253,9 +254,9 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .big2{font:700 64px/.9 var(--display);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .streak{font:700 15px var(--ui);padding:8px 15px;border-radius:999px;background:linear-gradient(140deg,var(--mark),color-mix(in srgb,var(--mark) 60%,#fff));color:var(--markInk);box-shadow:0 0 20px -6px color-mix(in srgb,var(--mark) 85%,transparent)}
 .metro{overflow-x:auto;padding:6px 2px 2px}
-.metroLine{display:flex;align-items:flex-start;min-width:max-content;position:relative;padding-top:4px}
+.metroLine{display:flex;align-items:flex-start;min-width:100%;width:max-content;position:relative;padding-top:4px}
 .metroLine::before{content:"";position:absolute;left:14px;right:14px;top:15px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--brand),var(--brand2));box-shadow:0 0 14px -3px var(--glow)}
-.stn{position:relative;display:grid;justify-items:center;gap:6px;width:56px;font:600 12px var(--ui);color:var(--muted);z-index:1}
+.stn{position:relative;display:grid;justify-items:center;gap:6px;flex:1 0 50px;min-width:50px;font:600 12px var(--ui);color:var(--muted);z-index:1}
 .stn i{width:16px;height:16px;border-radius:50%;background:var(--surface);border:4px solid var(--brand);box-sizing:border-box;margin-top:2px}
 .stn.now{color:var(--ink)}
 .stn.now i{width:22px;height:22px;margin-top:-1px;background:var(--mark);border-color:var(--ink);box-shadow:0 0 16px -2px color-mix(in srgb,var(--mark) 85%,transparent)}
@@ -399,3 +400,7 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
 .sign.web .url{font:600 12.5px var(--ui);padding:5px 10px 5px 26px;margin:0 0 8px;border-radius:8px;border:1px solid var(--line);
   background:color-mix(in srgb,var(--surface) 80%,transparent);position:relative;overflow-wrap:anywhere;text-align:left}
 .sign.web .url::before{content:"";position:absolute;left:9px;top:50%;width:8px;height:8px;margin-top:-5px;border:1.6px solid var(--muted);border-radius:50%}
+/* tableau des valeurs de la courbe : défile dans sa boîte sur téléphone au lieu d'élargir la page */
+#progTbl{overflow-x:auto;max-width:100%}
+#progTbl .scoreTbl{font-size:13px}
+#progTbl .scoreTbl th,#progTbl .scoreTbl td{padding-inline:6px}

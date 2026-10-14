@@ -1,6 +1,6 @@
 {
   "name": "a1-coach",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "A1 Coach : entraînement à l'examen Start Deutsch 1 (web, Android, iOS).",
   "scripts": {

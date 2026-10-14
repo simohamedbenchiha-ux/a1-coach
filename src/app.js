@@ -92,7 +92,7 @@ function setLang(id){if(!LANGS.some(l=>l.id===id))return;LANG=id;st.lang=id;save
 /* ===== Appli native (Capacitor, App Store / Play Store) : NATIVE n'est vrai que dans l'appli Android / iOS.
    Sans bundler, l'appli embarque vendor/capacitor.js ; un plugin natif n'est joignable qu'après
    Capacitor.registerPlugin(nom). plug() l'enregistre une fois, ou renvoie null s'il est absent. ===== */
-const APP_VERSION="1.3.0";
+const APP_VERSION="1.4.0";
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 const plugs={};
 function plug(n){if(!NATIVE)return null;
@@ -465,8 +465,10 @@ function schreiben(){
 
 /* ===== Heute: plan, missions, streak, Fehlerheft ===== */
 const WD=["So","Mo","Di","Mi","Do","Fr","Sa"];
+/* un nom très long (Staatsangehörigkeit) passe en plus petit pour tenir sur une ligne sans être coupé */
+const wordCls=w=>/\s/.test(w)||w.length<17?"word":"word long";
 function metroHtml(d){if(d===null||d<1)return"";
-  const days=[];for(let i=0;i<d;i++){if(d>7&&i>=2&&i<d-4){if(i===2)days.push({gap:1});continue}days.push({i})}
+  const tail=innerWidth<520?2:4,days=[];for(let i=0;i<d;i++){if(d>tail+3&&i>=2&&i<d-tail){if(i===2)days.push({gap:1});continue}days.push({i})}
   const lbl=i=>i===0?"Heute":i===1?"Morgen":WD[new Date(Date.now()+i*864e5).getDay()];
   return `<div class="metro" aria-label="${t("heute.metro")}"><div class="metroLine">${days.map(x=>x.gap?`<div class="stn gap"><i></i><span>…</span></div>`
     :`<div class="stn ${x.i===0?"now":""}">${x.i===0&&!RM?'<span class="pulse"></span>':""}<i></i><span>${lbl(x.i)}</span></div>`).join("")}<div class="stn end"><i></i><span>Prüfung</span></div></div></div>`}
@@ -672,7 +674,7 @@ function wortschatz(){
    <div class="row" style="justify-content:space-between"><span class="small">${t("v.mastered",{m:s.m,n:s.n})}</span><span class="small">${th.n}${th.g?" · Wortgruppe":""}</span></div>
    <div class="progress" role="img" aria-label="${t("v.masteredAria",{p:s.pct})}"><span style="width:${s.pct}%"></span></div>`;
   let body="";
-  const wordHtml=(showArt)=>`${picHtml(typeof IMG!=="undefined"&&IMG.word(x.w),"word")}<p class="word">${x.a&&showArt?`<span class="art art-${x.a}">${esc(x.a)}</span> `:""}${esc(x.w)}</p>${x.p&&showArt?`<p class="plural">Plural: ${/^\(/.test(x.p)?esc(x.p):"die "+esc(x.p)}</p>`:""}`;
+  const wordHtml=(showArt)=>`${picHtml(typeof IMG!=="undefined"&&IMG.word(x.w),"word")}<p class="${wordCls(x.w)}">${x.a&&showArt?`<span class="art art-${x.a}">${esc(x.a)}</span> `:""}${esc(x.w)}</p>${x.p&&showArt?`<p class="plural">Plural: ${/^\(/.test(x.p)?esc(x.p):"die "+esc(x.p)}</p>`:""}`;
   if(vMode==="karten"){
     body=`${wordHtml(true)}<div class="row" style="justify-content:center"><button class="btn ghost" id="say">🔊 Anhören</button><button class="btn" id="flip">Umdrehen</button></div><div id="back"></div>`;
   }else if(vMode==="bedeutung"){

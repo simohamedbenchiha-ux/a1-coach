@@ -143,3 +143,34 @@ Sources : https://www.goethe.de/ins/pt/de/spr/prf/gzsd1/ueb.html · https://en.w
 56. Cartes d'objet (Sprechen 3) : téléphone, stylo, fenêtre, café, clé, ticket, journal, chaise.
 
 ⚠ Ces situations sont tirées des types de textes officiels et de la liste de thèmes. Ce ne sont pas des copies de sujets.
+
+## 6. Analyse d'un Übungstest telc Start Deutsch 1 (fourni par l'utilisateur, octobre 2026)
+
+Lu pour le **format seulement** ; aucun texte, aucune image ni aucun son n'a été repris dans l'appli
+(« Alle Prüfungsmaterialien, auch einzelne Teile, sind urheberrechtlich geschützt »).
+
+- **Durée** : Formalitäten 10 min, Hören ≈ 20 min, Lesen + Schreiben 45 min en un bloc (≈ 25 + 20), oral 15 min.
+  Barème telc sur 60 (15 par module), réussite à 36 ; sehr gut 54-60, gut 48-53,5, befriedigend 42-47,5,
+  ausreichend 36-41,5, sinon « teilgenommen ».
+- **Chaque Teil commence par un « Beispiel »** déjà résolu → repris dans l'examen blanc (`beispiel()`).
+- **Hören Teil 1** : 3 dessins légendés par question (prix sur étiquette, horloges, plats, salles, étages,
+  lieux) → nos jetons `pics` (horloges, prix, pictos). Teil 2 : affirmations souvent avec « sollen »
+  (consigne d'une annonce). Teil 3 : messages de répondeur, dont une annonce automatique.
+- **Enregistrement** (17 min, mesuré par détection des silences) : ≈ 7 s de lecture avant chaque texte, le
+  texte (deux fois en Teil 1 et 3), puis ≈ 15-16 s pour répondre → `examAudio()`. Dialogues à deux voix → `speak()`.
+- **Lesen Teil 1** : 2 textes (e-mail dans une fenêtre, lettre) avec 2 et 3 affirmations. Teil 2 : captures de
+  **pages web avec barre d'adresse** et un horaire de train (tableau ab/an) → rendu « page web » pour les
+  annonces qui commencent par « www. ». Teil 3 : chaque panneau a un lieu (« An der Tür der Sprachschule »,
+  « Am Bahnhof »).
+- **Schreiben Teil 1** : formulaire avec un champ exemple (0) et 5 trous ; les fautes d'orthographe sont
+  acceptées si la réponse reste claire, pas dans les nombres → `fieldOk()`. **Teil 2** : 3 points imposés,
+  ~30 mots, 3 + 3 + 3 (paliers 3 / 1,5 / 0) + 1 pour la forme (Anrede, Gruß) → `gradeMail()`.
+- **Sprechen** (grille M10) : Teil 1 vorstellen / buchstabieren / Zahlen (1 / 0,5 / 0 chacun) ; Teil 2 deux
+  thèmes, cartes avec un mot, question 2 / 1 / 0 + réponse 1 / 0,5 / 0 ; Teil 3 cartes photo d'objets,
+  demande 2 / 1 / 0 + réaction 1 / 0,5 / 0 → grille d'auto-évaluation de l'examen blanc.
+- Feuille de réponses S30 : report des réponses, richtig = (+), falsch = (–).
+
+Liens reçus en même temps : un extrait d'éditeur (Klett), un Modelltest telc hébergé par une école, le
+Übungstest telc A1 Zuwanderer, un Übungssatz pour cours d'intégration (DTZ) : tous protégés par le droit
+d'auteur, utilisables seulement comme modèles de format. Le lien pdfcoffee renvoie à une copie non autorisée
+d'un manuel commercial : non consulté.
