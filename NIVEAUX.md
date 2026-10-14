@@ -31,6 +31,21 @@ Les examens du Goethe-Institut changent de temps en temps. Avant de construire u
 résultat devra donc afficher un verdict par module (`scoring:"modules"` dans `LEVELS`), au lieu du total
 d'A1 et A2 (`scoring:"total"`).
 
+## Goethe et telc
+
+« Start Deutsch 1 » est **le même examen** chez Goethe et chez telc (conçu en commun) : l'appli prépare aux
+deux. telc publie le barème sur 60 points bruts avec réussite à 36, c'est la même règle de 60 %.
+
+Deux examens telc différents sont au catalogue (« bientôt ») car beaucoup d'apprenants les passent en Allemagne :
+
+| Examen | Parties | Barème |
+|---|---|---|
+| telc Deutsch A1 für Zuwanderer (`A1-Z`) | Sprachbausteine (10 QCM à trous) · Hören (R/F + nombres et lettres) · Hören und antworten (choisir la réplique) · Lesen (associations, R/F, QCM) · Schreiben (formulaire + message) · Sprechen (se présenter, informations, proposer et réagir) | /100, réussite à 60 |
+| DTZ, Deutsch-Test für Zuwanderer (`DTZ`) | Hören 4 Teile (20 items) · Lesen 5 Teile (25 items) · Schreiben (lettre, 4 points) · Sprechen (se présenter, image, planifier) | résultat A2 ou B1, pas de « réussi » |
+
+Nouveaux types de tâches à créer pour eux : texte à trous a/b (Sprachbausteine), « entendre une phrase et
+choisir la réponse », association titre ↔ texte. Détails et sources : RECHERCHE-A1.md.
+
 ## Étapes pour construire un niveau (exemple : A2)
 
 1. **Contenu** : un fichier `src/levels/a2.js` (nouveau dossier) qui ajoute ses questions à `Q`, ses parties à

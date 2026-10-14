@@ -48,7 +48,7 @@ function makeExamPDF(JsPDF,withSol){
   font(10,"normal",[255,255,255]);doc.text("GOETHE-ZERTIFIKAT A1 · FORMAT START DEUTSCH 1",M,22);
   font(30,"bold",[255,255,255]);doc.text("Modellprüfung A1",M,38);
   doc.setFillColor(...MK);doc.roundedRect(M,45,74,10,2,2,"F");font(12,"bold",INK);doc.text("Übungssatz zum Ausdrucken",M+3,51.8);
-  y=86;font(11,"bold");doc.text("Name:",M,y);doc.setDrawColor(...INK);doc.line(M+16,y+1,M+100,y+1);doc.text("Datum:",M+108,y);doc.line(M+124,y+1,PW-M,y+1);
+  y=86;font(11,"bold");doc.text("Name:",M,y);if(authEmail()){font(10,"normal");doc.text(authEmail(),M+18,y-1);font(11,"bold")}doc.setDrawColor(...INK);doc.line(M+16,y+1,M+100,y+1);doc.text("Datum:",M+108,y);doc.line(M+124,y+1,PW-M,y+1);
   y+=14;font(12,"bold",BR);doc.text("Prüfungsteile",M,y);y+=4;
   const rows=[["Hören","15 Aufgaben (Teil 1–3)","ca. 20 Min."],["Lesen","15 Aufgaben (Teil 1–3)","25 Min."],["Schreiben","Formular + kurze E-Mail","20 Min."],["Sprechen","Teil 1–3 (Gruppe)","ca. 15 Min."]];
   rows.forEach(r=>{doc.setDrawColor(...LN);doc.line(M,y+8,PW-M,y+8);font(11,"bold");doc.text(r[0],M,y+6);font(10.5);doc.text(r[1],M+32,y+6);doc.text(r[2],M+108,y+6);doc.text("____ / 15",PW-M,y+6,{align:"right"});y+=9});

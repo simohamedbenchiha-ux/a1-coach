@@ -1,6 +1,6 @@
 // Traductions : chaque langue a toutes les clés d'interface du français (même type : texte ou fonction),
 // tout le contenu (questions, mots, cartes d'oral, formulaires, e-mails), aucun texte vide,
-// la bonne écriture (arabe pour ar / ary, latine pour ary-Latn), et les fonctions marchent pour n = 0, 1, 2, 3, 11.
+// la bonne écriture (arabe pour ar / ary, latine pour les autres), et les fonctions marchent pour n = 0, 1, 2, 3, 11.
 // node tests/i18n.mjs            → toutes les langues
 // node tests/i18n.mjs ar ary     → seulement celles-ci
 import { readFileSync, existsSync } from "node:fs";
@@ -21,7 +21,7 @@ for (const id of todo) {
 const { I18N } = ctx.X, FR = I18N.fr.ui;
 const AR = /[؀-ۿ]/;
 const VARS = n => ({ n, m: n, q: n, v: n, d: "12.10.2026", stats: "…", list: "Hören, Lesen", h: 19, app: true,
-  s: "Hören", p: 42, w: 50, need: 10, f: 4 });
+  s: "Hören", p: 42, w: 50, need: 10, f: 4, e: "lea@example.com" });
 let fails = 0;
 const fail = (id, msg) => { fails++; console.log(`FAIL ${id} : ${msg}`); };
 
@@ -64,7 +64,7 @@ for (const id of todo) {
   else P.wr.forEach((w, i) => { if (w.length !== src.wr[i].length) fail(id, `e-mail ${i} : ${src.wr[i].length} éléments attendus`); texts.push(...w); });
   const empty = texts.filter(s => typeof s !== "string" || !s.trim());
   if (empty.length) fail(id, `${empty.length} texte(s) vide(s)`);
-  // écriture : l'arabe et la Darija en lettres arabes doivent être en arabe ; l'arabizi jamais
+  // écriture : l'arabe et la Darija doivent être en lettres arabes ; les autres langues jamais
   const prose = texts.filter(s => typeof s === "string" && /[a-zA-Z؀-ۿ]{4}/.test(s));
   if (info.dir === "rtl") {
     const latin = prose.filter(s => !AR.test(s));

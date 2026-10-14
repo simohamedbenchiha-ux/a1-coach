@@ -8,13 +8,50 @@ const LANGS=[
   {id:"en",name:"English",flag:"🇬🇧",dir:"ltr",de:"Englisch",locale:"en-GB"},
   {id:"ar",name:"العربية",flag:"🌐",dir:"rtl",de:"Arabisch (Hocharabisch)",locale:"ar"},
   {id:"ary",name:"الدارجة",flag:"🇲🇦",dir:"rtl",de:"Marokkanisches Arabisch (Darija) in arabischer Schrift",locale:"ar-MA"},
-  {id:"ary-Latn",name:"Darija (3arbizi)",flag:"🇲🇦",dir:"ltr",de:"Marokkanisches Arabisch (Darija) in lateinischer Schrift (Arabizi, mit Zahlen wie 3, 7, 9)",locale:"ar-MA"},
   {id:"es",name:"Español",flag:"🇪🇸",dir:"ltr",de:"Spanisch",locale:"es-ES"},
   {id:"it",name:"Italiano",flag:"🇮🇹",dir:"ltr",de:"Italienisch",locale:"it-IT"}
 ];
 const I18N={};
 const pl=(n,one,many)=>n>1?many:one; // pluriel simple (français, anglais, espagnol, italien)
 I18N.fr={ui:{
+  "about.telc":"Non affiliée non plus à telc gGmbH ; « telc » est une marque de telc gGmbH.",
+  "exam.telc":"Même examen chez Goethe et chez telc : « Start Deutsch 1 », conçu en commun. telc note sur 60 points, réussite à 36 : c'est aussi 60 %.",
+  "set.account":"Mon compte",
+  "auth.title":"Connexion",
+  "auth.signupTitle":"Créer un compte",
+  "auth.forgotTitle":"Mot de passe oublié",
+  "auth.newPwTitle":"Choisis un nouveau mot de passe",
+  "auth.sub":"Connecte-toi pour retrouver ton cours et ta progression sur tous tes appareils.",
+  "auth.email":"Adresse e-mail",
+  "auth.pw":"Mot de passe",
+  "auth.pw2":"Nouveau mot de passe (8 caractères minimum)",
+  "auth.login":"Se connecter",
+  "auth.signup":"Créer mon compte",
+  "auth.toSignup":"Pas encore de compte ? En créer un",
+  "auth.toLogin":"Déjà un compte ? Se connecter",
+  "auth.forgot":"Mot de passe oublié ?",
+  "auth.sendReset":"Envoyer le lien",
+  "auth.resetSent":"Si un compte existe pour cette adresse, un e-mail avec un lien vient de partir.",
+  "auth.checkMail":"Compte créé : ouvre l'e-mail de confirmation, puis reviens te connecter.",
+  "auth.savePw":"Enregistrer",
+  "auth.pwSaved":"Mot de passe modifié.",
+  "auth.loading":"Un instant…",
+  "auth.offline":"Pas de connexion internet : il en faut une pour se connecter au compte.",
+  "auth.badLogin":"E-mail ou mot de passe incorrect.",
+  "auth.notConfirmed":"Confirme d'abord ton adresse : ouvre l'e-mail que tu as reçu.",
+  "auth.weak":"Le mot de passe doit contenir au moins 8 caractères.",
+  "auth.exists":"Un compte existe déjà avec cette adresse.",
+  "auth.badEmail":"Adresse e-mail invalide.",
+  "auth.rate":"Trop d'essais. Réessaie dans quelques minutes.",
+  "auth.failed":"Ça n'a pas marché. Réessaie.",
+  "auth.legal":"Ton adresse e-mail sert seulement à ton compte et à ta progression.",
+  "acc.signedAs":v=>`Connecté : ${v.e}`,
+  "acc.logout":"Se déconnecter",
+  "acc.delete":"Supprimer mon compte",
+  "acc.deleteConfirm":"Ton compte et la progression enregistrée en ligne seront supprimés définitivement. La progression de cet appareil reste.",
+  "acc.deleteYes":"Supprimer définitivement",
+  "acc.deleted":"Compte supprimé.",
+  "res.account":v=>`Examen passé avec le compte ${v.e}`,
   "set.title":"⚙️ Réglages","set.lang":"Langue des explications","set.level":"Niveau","set.color":"Couleur de ligne","set.theme":"Thème",
   "set.offline":"Appli hors ligne","set.install":"📲 Installer sur cet appareil","set.progress":"Ma progression",
   "set.reminder":"Rappel quotidien","set.reminderHour":"Heure du rappel","set.about":"À propos",
@@ -115,7 +152,8 @@ I18N.fr={ui:{
   "res.expFail":"Les erreurs ci-dessous reviendront en priorité."
 }};
 /* langue de départ : choix enregistré, sinon celle de l'appareil (ar-MA → Darija), sinon anglais */
-function pickLang(saved){if(LANGS.some(l=>l.id===saved))return saved;
+function pickLang(saved){if(saved==="ary-Latn")return "ary"; // Darija en lettres latines retirée en 1.4
+  if(LANGS.some(l=>l.id===saved))return saved;
   for(const n of (navigator.languages||[navigator.language||""])){const c=String(n).toLowerCase();
     if(c==="ar-ma")return "ary";const b=c.split("-")[0];if(LANGS.some(l=>l.id===b))return b}
   return "en"}

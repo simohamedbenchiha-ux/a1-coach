@@ -62,7 +62,7 @@ la clé « service_role » de Supabase. Les seules valeurs à me donner sont pub
 ## Ce que je ferai ensuite dans le code
 
 - plugins `@revenuecat/purchases-capacitor` et client Supabase (sans bundler : fichier dans `vendor/`) ;
-- écrans Compte, Connexion, Mot de passe oublié, Paywall, Supprimer mon compte, traduits dans les 7 langues ;
+- écrans Compte, Connexion, Mot de passe oublié, Paywall, Supprimer mon compte, traduits dans les 6 langues ;
 - fonction SQL `delete_user()` (supprime le compte et sa progression) et règles RLS ;
 - synchronisation de la progression (fusion avec celle du téléphone à la première connexion) ;
 - mode démo pour le site et pour les utilisateurs sans abonnement ;

@@ -1,7 +1,7 @@
 /* Logique de l'appli : état, entraînement adaptatif, Heute, Wortschatz, Sprechen, Schreiben, Prüfung, Motion, Claude. */
 let st={box:{},hist:[],exam:"",err:{}};
 try{const s=JSON.parse(localStorage.getItem("a1coach")||"null");if(s)st=Object.assign(st,s)}catch(e){}
-const save=()=>{try{localStorage.setItem("a1coach",JSON.stringify(st))}catch(e){}};
+const save=()=>{try{localStorage.setItem("a1coach",JSON.stringify(st))}catch(e){}authQueue()}; // authQueue : envoi au compte (auth.js)
 LANG=pickLang(st.lang);
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
@@ -82,11 +82,11 @@ function applyLang(){const L=langInfo(),r=document.documentElement;r.lang=L.id;r
   $$(".langPick").forEach(b=>{b.innerHTML=pick});
   $$("[data-lang]").forEach(b=>b.onclick=()=>setLang(b.dataset.lang));renderLevels()}
 function renderLevels(){const cur=level().id,el=$("#levels");if(!el)return;
-  el.innerHTML=LEVELS.map(l=>`<button type="button" class="sw lvl" data-level="${l.id}" aria-pressed="${l.id===cur}"${l.ready?"":" disabled"}><b lang="de">${l.id}</b> <span${l.ready?' lang="de"':""}>${l.ready?esc(l.exam):t("level.soon")}</span></button>`).join("");
+  el.innerHTML=LEVELS.map(l=>`<button type="button" class="sw lvl" data-level="${l.id}" aria-pressed="${l.id===cur}"${l.ready?"":" disabled"}><b lang="de">${esc(l.label||l.id)}</b> <span${l.ready?' lang="de"':""}>${l.ready?esc(l.exam):t("level.soon")}</span></button>`).join("");
   $$("[data-level]").forEach(b=>b.onclick=()=>{if(b.disabled||st.level===b.dataset.level)return;st.level=b.dataset.level;save();renderLevels();
     const cur=$('[data-tab][aria-selected="true"]');if(!ex)show(cur?cur.dataset.tab:"heute")})}
 function setLang(id){if(!LANGS.some(l=>l.id===id))return;LANG=id;st.lang=id;save();applyLang();
-  renderMeter();renderAbout();bkInfo();notifSync();renderInstall();renderCountdown();if(st.notif&&st.notif!=="off")notifApply();
+  renderMeter();renderAbout();bkInfo();renderAccount();notifSync();renderInstall();renderCountdown();if(st.notif&&st.notif!=="off")notifApply();
   const cur=$('[data-tab][aria-selected="true"]');if(!ex)show(cur?cur.dataset.tab:"heute")}
 
 /* ===== Appli native (Capacitor, App Store / Play Store) : NATIVE n'est vrai que dans l'appli Android / iOS.
@@ -171,7 +171,7 @@ if(appPlug)appPlug.addListener("backButton",()=>{const d=$("#onb");if(d&&d.open)
 function statusBar(){const sb=plug("StatusBar");if(!sb)return;const r=document.documentElement.dataset.theme;
   const dark=r?r==="dark":matchMedia("(prefers-color-scheme: dark)").matches;sb.setStyle({style:dark?"DARK":"LIGHT"}).catch(()=>{})}
 try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",statusBar)}catch(e){}
-function renderAbout(){$("#about").textContent=t("about",{v:APP_VERSION,app:NATIVE})}
+function renderAbout(){$("#about").textContent=t("about",{v:APP_VERSION,app:NATIVE})+" "+t("about.telc")}
 
 /* ===== Appli hors ligne (PWA) : seulement quand la page est hébergée en https (ou localhost) avec son
    manifeste. Le fichier unique (artifact claude.ai) n'a pas de manifeste : rien ne s'active. ===== */
@@ -254,12 +254,14 @@ function qBody(q,training){
   if(q.audio)h+=`<div class="row"><button class="btn mark" id="play">▶ Hören</button><button class="btn ghost" id="rate">${rateLabel()}</button></div>`;
   if(q.mail)h+=`<div class="mail">${esc(q.mail)}</div>`;
   if(q.ab)h+=`<p class="q" lang="de">${esc(q.q)}</p><div class="ab">${q.ab.map((t,i)=>`<div class="sign"><b>${"ab"[i]}</b>${esc(t)}</div>`).join("")}</div>`;
-  else{if(q.sign)h+=`<div class="sign" lang="de">${esc(q.sign)}</div>`;h+=`<p class="q" lang="de">${fmtQ(q.q)}</p>`}
+  else{if(q.sign)h+=`<div class="sign${q.pic?" withPic":""}" lang="de">${picHtml(q.pic)}<span>${esc(q.sign)}</span></div>`;else if(q.pic)h+=picHtml(q.pic,"big");h+=`<p class="q" lang="de">${fmtQ(q.q)}</p>`}
   if(training)h+=`<div><button class="btn help" id="help">${t("help.btn")}</button><p class="fr" id="frT" hidden>${esc(tq(q).fr)}</p></div>`;
   return h;
 }
-function optsHtml(q,opts){const letters=!isRF(q)&&!q.ab;
-  return `<div class="opts ${isRF(q)||q.ab?"two":""}">${opts.map((o,i)=>`<button class="opt" dir="ltr" lang="de" data-i="${i}">${letters?`<span class="ltr">${"abc"[i]}</span>`:""}<span>${esc(o)}</span></button>`).join("")}</div>`}
+/* Images (img.js) : dessins au trait originaux, jamais les visuels du Goethe-Institut ou de telc. */
+const picHtml=(tok,cls)=>tok&&typeof IMG!=="undefined"&&IMG.has(tok)?`<span class="pic ${cls||""}" aria-hidden="true">${IMG.svg(tok)}</span>`:"";
+function optsHtml(q,opts){const letters=!isRF(q)&&!q.ab,pics=q.pics&&q.o&&typeof IMG!=="undefined";
+  return `<div class="opts ${isRF(q)||q.ab?"two":""}${pics?" pics":""}">${opts.map((o,i)=>`<button class="opt${pics?" picOpt":""}" dir="ltr" lang="de" data-i="${i}">${pics?picHtml(q.pics[q.o.indexOf(o)]):""}${letters?`<span class="ltr">${"abc"[i]}</span>`:""}<span>${esc(o)}</span></button>`).join("")}</div>`}
 function bindAudio(q,maxPlays){if(!q.audio)return;let plays=0;
   $("#play").onclick=()=>{if(maxPlays&&plays>=maxPlays)return;
     if(!speak(q.audio)){$("#play").textContent=t("audio.unavailable");return}
@@ -283,12 +285,12 @@ function pick(pool){
 
 let errMode=false;
 const errIds=()=>Q.filter(q=>st.err&&st.err[q.id]);
-function smart(){
+function smart(force){ // force : une question précise (tests, liens directs)
   let pool=Q,banner="";
   if(errMode){pool=errIds();
     if(!pool.length){errMode=false;pool=Q;banner=`<div class="ai-box"><b>${t("err.emptyT")}</b><span class="small">${t("err.empty")}</span></div>`}
     else banner=`<div class="ai-box"><div class="row" style="justify-content:space-between"><b>${t("err.banner",{n:pool.length})}</b><button class="btn ghost" id="exitErr" style="padding:6px 12px;font-size:13px">${t("err.quit")}</button></div><span class="small">${t("err.rule")}</span></div>`}
-  const q=pick(pool),opts=optsOf(q),ans=answerOf(q);let used=false;
+  const q=force||pick(pool),opts=optsOf(q),ans=answerOf(q);let used=false;
   const pl=TEIL[q.p].plays;
   $("#panel").innerHTML=`<div class="card">${banner}${qBody(q,true)}${pl?`<p class="small">${t("tr.plays",{n:pl})}</p>`:""}${optsHtml(q,opts)}<div id="after"></div></div>`;
   bindAudio(q);
@@ -300,7 +302,7 @@ function smart(){
     if(!ok)b.classList.add("wrong");fx(ok,ok?b:b);
     record(q.s,ok?(used?.5:1):0,q.id);
     $("#after").innerHTML=`<div class="fb ${ok?"":"no"}"><p><b lang="de">${ok?"Richtig!":"Leider falsch."}</b>${rtl()?"":" "+esc(tq(q).x)}</p>${rtl()?`<p dir="${dirOf(tq(q).x)}">${esc(tq(q).x)}</p>`:""}${q.audio?`<p class="tr" lang="de">„${esc(q.audio)}“</p>`:""}<p class="fr">${esc(tq(q).fr)}</p>${!ok?`<p class="small">${t("fb.again")}</p>`:used?`<p class="small">${t("fb.helpUsed")}</p>`:""}</div><div class="row" style="margin-top:12px"><button class="btn" id="next">Weiter →</button></div>`;
-    $("#next").onclick=smart;$("#next").focus();
+    $("#next").onclick=()=>smart();$("#next").focus();
   });
 }
 
@@ -357,7 +359,7 @@ function sprechen(){
   const P=SPEAK[spPart],ii=spIdx%P.items.length,it=P.items[ii];
   $("#panel").innerHTML=`<div class="card">
    ${spTabs}
-   <div class="label">${P.title} · ${P.max} Punkte</div><div class="sign" lang="de">${esc(it.p)}</div>${it.hint?`<p class="instr" lang="de">${esc(it.hint)}</p>`:""}
+   <div class="label">${P.title} · ${P.max} Punkte</div><div class="sign${it.pic?" withPic":""}" lang="de">${picHtml(it.pic,"card")}<span>${esc(it.p)}</span></div>${it.hint?`<p class="instr" lang="de">${esc(it.hint)}</p>`:""}
    <div><button class="btn help" id="help">${t("help.btn")}</button><p class="fr" id="frT" hidden>${esc(tsp(spPart,ii,it))}</p></div>
    <div class="row"><span class="timer" id="t">0:30</span><button class="btn mark" id="go">${apiMic?"🎙️ ":""}Laut sprechen (30 s)</button></div>
    <p class="small" style="margin:0">${t(apiMic?(hasAI()?"sp.hintApiAI":"sp.hintApiCmp"):(hasAI()?"sp.hintKbdAI":"sp.hintKbdCmp"))}</p>
@@ -653,7 +655,7 @@ function wortschatz(){
    <div class="row" style="justify-content:space-between"><span class="small">${t("v.mastered",{m:s.m,n:s.n})}</span><span class="small">${th.n}${th.g?" · Wortgruppe":""}</span></div>
    <div class="progress" role="img" aria-label="${t("v.masteredAria",{p:s.pct})}"><span style="width:${s.pct}%"></span></div>`;
   let body="";
-  const wordHtml=(showArt)=>`<p class="word">${x.a&&showArt?`<span class="art art-${x.a}">${esc(x.a)}</span> `:""}${esc(x.w)}</p>${x.p&&showArt?`<p class="plural">Plural: ${/^\(/.test(x.p)?esc(x.p):"die "+esc(x.p)}</p>`:""}`;
+  const wordHtml=(showArt)=>`${picHtml(typeof IMG!=="undefined"&&IMG.word(x.w),"word")}<p class="word">${x.a&&showArt?`<span class="art art-${x.a}">${esc(x.a)}</span> `:""}${esc(x.w)}</p>${x.p&&showArt?`<p class="plural">Plural: ${/^\(/.test(x.p)?esc(x.p):"die "+esc(x.p)}</p>`:""}`;
   if(vMode==="karten"){
     body=`${wordHtml(true)}<div class="row" style="justify-content:center"><button class="btn ghost" id="say">🔊 Anhören</button><button class="btn" id="flip">Umdrehen</button></div><div id="back"></div>`;
   }else if(vMode==="bedeutung"){
@@ -711,7 +713,7 @@ function exam(){
    <p>${t("exam.same")}</p>
    <table class="scoreTbl"><tr><th>Modul</th><th>Aufbau</th><th class="n">Zeit</th></tr>
     ${LV.modules.map(m=>`<tr><td>${SK[m.s]}</td><td>${aufbau(m)}</td><td class="n">${m.s==="H"||m.s==="S"?"≈ ":""}${m.min} min</td></tr>`).join("")}</table>
-   <p class="small">${t("exam.scale")}</p>
+   <p class="small">${t("exam.scale")}</p><p class="small">${t("exam.telc")}</p>
    <div class="row"><button class="btn shine" id="full">Komplette Prüfung starten</button><button class="btn ghost" id="exp">Express (12 Aufgaben, 10 min)</button></div>
    <div class="pdfBox"><div class="label">${t("exam.paper")}</div>
     <p class="small" style="margin:0">${t("exam.paperDesc")}</p>
@@ -774,7 +776,7 @@ function sprechenExam(){ex.stage="S";
   const cards=[1,2,3].map(n=>{const P=SPEAK[n];return {n,P,it:P.items[Math.random()*P.items.length|0]}});
   const lv=max=>max===3?[[0,"nicht geschafft"],[1.5,"teilweise"],[3,"gut"]]:[[0,"nicht geschafft"],[3,"teilweise"],[6,"gut"]];
   $("#panel").innerHTML=`<div class="card">${stepper()}<h2>Sprechen</h2><p class="small">${t("exam.speakIntro")}</p>
-   ${cards.map(c=>`<div class="label">${c.P.title} · ${c.P.max} Punkte</div><div class="sign" lang="de">${esc(c.it.p)}</div>${c.it.hint?`<p class="instr" lang="de">${esc(c.it.hint)}</p>`:""}
+   ${cards.map(c=>`<div class="label">${c.P.title} · ${c.P.max} Punkte</div><div class="sign${c.it.pic?" withPic":""}" lang="de">${picHtml(c.it.pic,"card")}<span>${esc(c.it.p)}</span></div>${c.it.hint?`<p class="instr" lang="de">${esc(c.it.hint)}</p>`:""}
      <div class="rate"><label for="s${c.n}" class="small">${t("exam.how")}</label><select id="s${c.n}">${lv(c.P.max).map(([v,l])=>`<option value="${v}">${l} (${v} P.)</option>`).join("")}</select></div>`).join("")}
    <div class="row"><button class="btn mark" id="ev">Auswerten</button><button class="btn ghost" id="skip">Ohne Sprechen auswerten</button></div></div>`;
   $("#ev").onclick=()=>{const s=[1,2,3].reduce((a,n)=>a+ +$("#s"+n).value,0);ex.raw.S=Math.round(s);record("S",s/15);finishFull()};
@@ -791,7 +793,7 @@ function finishFull(){
   const verdict=total===null?t("res.written",{w:Math.round(written),need:Math.max(0,P-Math.round(written))})
     :total>=P?`<b>Bestanden – ${grade(total)}.</b> ${t("res.pass")}`:`<b>Nicht bestanden.</b> ${t("res.fail",{n:P-total})}`;
   const W=ex.W;ex=null;bump("E");save();
-  $("#panel").innerHTML=`<div class="card"><div class="label">Ergebnis</div><div class="big">${total===null?Math.round(written)+" / "+wMax:total+" / 100"}</div><p>${verdict}</p>
+  $("#panel").innerHTML=`<div class="card"><div class="label">Ergebnis</div>${authEmail()?`<p class="small" style="margin:0">${esc(t("res.account",{e:authEmail()}))}</p>`:""}<div class="big">${total===null?Math.round(written)+" / "+wMax:total+" / 100"}</div><p>${verdict}</p>
    <table class="scoreTbl"><tr><th>Modul</th><th class="n">Rohpunkte</th><th class="n">× ${String(LV.factor).replace(".",",")}</th></tr>${row("H","Hören")}${row("L","Lesen")}${row("W","Schreiben")}${row("S","Sprechen")}
    <tr class="total"><td>Gesamt</td><td></td><td class="n">${total===null?Math.round(written)+" / "+wMax:total+" / 100"}</td></tr></table>
    <div class="label">${t("res.perTeil")}</div><ul class="check">${perTeil}</ul>
@@ -821,4 +823,4 @@ $("#bkSave").onclick=backupSave;$("#bkLoad").onclick=()=>$("#bkFile").click();
 $("#bkFile").onchange=e=>{backupLoad(e.target.files[0]);e.target.value=""};
 $("#onbAgain").onclick=()=>{$(".settings").open=false;onboard()};
 applyDesign();applyLang();renderMeter();renderCountdown();renderAbout();bkInfo();notifSync();heute();
-if(!st.onboarded){if(st.hist.length){st.onboarded=true;save()}else onboard()}
+authStart(()=>{if(!st.onboarded){if(st.hist.length){st.onboarded=true;save()}else onboard()}}); // écran de connexion si les comptes sont activés

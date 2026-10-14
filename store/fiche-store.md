@@ -16,7 +16,7 @@ par script (limites des stores entre parenthèses).
 | Site / assistance | https://simohamedbenchiha-ux.github.io/a1-coach/ · https://github.com/simohamedbenchiha-ux/a1-coach/issues |
 | Politique de confidentialité | https://simohamedbenchiha-ux.github.io/a1-coach/privacy.html |
 
-> **Marques.** « Goethe-Zertifikat » et « Start Deutsch » appartiennent au Goethe-Institut. Ne les mets
+> **Marques.** « Goethe-Zertifikat » et « Start Deutsch » appartiennent au Goethe-Institut, « telc » à telc gGmbH. Ne les mets
 > **ni dans le nom, ni dans le sous-titre, ni dans les mots-clés** (refus fréquent chez Apple, règle 5.2.1,
 > et chez Google). On peut les citer dans la description pour dire à quel examen l'appli prépare, avec la
 > mention de non-affiliation ci-dessous.
@@ -51,6 +51,10 @@ TON PLAN DU JOUR
 • Une jauge par épreuve et le seuil de réussite de 60 % toujours visible
 • La courbe de ta progression jusqu'au jour J
 
+PLUS DE 250 EXERCICES ORIGINAUX
+• Le format de l'examen Start Deutsch 1, le même chez Goethe et chez telc
+• 30 exercices par partie de l'examen, 70 de grammaire, 20 sujets d'e-mail, 59 cartes d'oral
+
 LES QUATRE ÉPREUVES
 • Hören : écoute des textes lus en allemand, avec le nombre d'écoutes de l'examen
 • Lesen : e-mails, annonces et panneaux, Richtig/Falsch et choix multiples
@@ -58,7 +62,7 @@ LES QUATRE ÉPREUVES
 • Sprechen : cartes d'oral chronométrées ; dicte ta réponse et compare-la au modèle
 
 VOCABULAIRE
-• 290 mots de la liste A1, classés par thème
+• Plus de 650 mots du niveau A1, classés par thème, avec des dessins
 • Cartes, sens, et der · die · das avec un code couleur
 • Prononciation de chaque mot et de chaque exemple
 
@@ -68,15 +72,15 @@ EXAMEN BLANC
 • Sujet complet en PDF à imprimer, avec ou sans corrigé
 
 FAIT POUR TOI
-• Explications au choix en français, anglais, arabe, darija (lettres arabes ou latines),
-  espagnol ou italien ; exercices en allemand
+• Explications au choix en français, anglais, arabe, darija, espagnol ou italien ; exercices en allemand
 • Rappel quotidien à l'heure de ton choix
 • Fonctionne sans connexion, sans compte, sans publicité
 • Ta progression reste sur ton téléphone ; sauvegarde-la dans un fichier quand tu veux
 • Thème clair ou sombre, cinq couleurs
 
 Tous les textes d'entraînement sont originaux. A1 Coach est une application indépendante, non affiliée
-au Goethe-Institut. « Goethe-Zertifikat » et « Start Deutsch » sont des marques du Goethe-Institut.
+au Goethe-Institut ni à telc. « Goethe-Zertifikat » et « Start Deutsch » sont des marques du Goethe-Institut,
+« telc » est une marque de telc gGmbH.
 ```
 
 ## Nouveautés de la version (notes de version)
@@ -84,7 +88,7 @@ au Goethe-Institut. « Goethe-Zertifikat » et « Start Deutsch » sont des marq
 ```
 Première version : plan du jour, révisions espacées, quatre épreuves, dictée vocale en allemand,
 examen blanc avec PDF, rappel quotidien et mode hors ligne.
-(Version 1.3 : explications en 7 langues, dont l'arabe et la darija ; mise en page de droite à gauche.)
+(Version 1.3 : explications en 6 langues, dont l'arabe et la darija ; mise en page de droite à gauche.)
 ```
 
 ## Images (dossier `store/`)

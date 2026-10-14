@@ -11,13 +11,15 @@ const dist = join(root, "dist/a1-coach.html"), out = mkdtempSync(join(tmpdir(), 
 execFileSync("node", [join(root, "scripts/build.mjs")], { stdio: "inherit" });
 
 const suites = [
-  ["i18n", "traductions complètes (7 langues), identifiants uniques", []],
+  ["i18n", "traductions complètes (6 langues), identifiants uniques", []],
   ["backup", "accueil, sauvegarde/restauration (dont fichier piégé), PDF", [dist, out]],
   ["srs_chart", "répétition espacée, courbe de progression", [dist, out]],
   ["voice", "dictée web, micro refusé, mode clavier iPhone", [dist, out]],
   ["native", "couche native simulée : dictée, voix, rappel, retour, partage", [dist, out]],
   ["pwa", "hors ligne (service worker sur localhost)", [root, dist]],
   ["lang", "chaque langue : RTL, onglets, examen complet, niveaux", [dist, out]],
+  ["auth", "comptes : inscription, connexion, synchro, fusion, mot de passe oublié, suppression", [dist, out]],
+  ["tour", "tour complet : tous les écrans, téléphone/ordinateur, clair/sombre, fr/ar", [dist, out]],
   ["audit", "mots allemands jamais coupés, aucune erreur JS", [dist, out]],
 ];
 const only = process.argv.slice(2);

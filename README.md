@@ -9,8 +9,11 @@ Ouvre `index.html` dans ton navigateur. Aucune installation n'est nécessaire.
 
 ## Nouveautés
 
-- **7 langues d'explication** : français, anglais, arabe, darija en lettres arabes ou en lettres latines
-  (3arbizi), espagnol, italien (Réglages → Langue des explications). L'allemand de l'examen ne change pas ;
+- **Banque d'exercices agrandie** : 252 questions originales (30 par partie de l'examen, 70 de grammaire),
+  682 mots, 59 cartes d'oral, 10 formulaires et 20 sujets d'e-mail, au format Start Deutsch 1 (le même chez
+  Goethe et chez telc). Dessins au trait originaux : horloges, prix, dates, pictos.
+- **Comptes sur le site** (e-mail + mot de passe) : prêts, à activer en suivant COMPTES.md.
+- **6 langues d'explication** : français, anglais, arabe, darija (en lettres arabes), espagnol, italien (Réglages → Langue des explications). L'allemand de l'examen ne change pas ;
   l'arabe et la darija s'affichent de droite à gauche.
 - **Niveaux** : A1 aujourd'hui ; A2, B1, B2, C1 et C2 sont prévus (voir NIVEAUX.md). Comptes et abonnement :
   voir ABONNEMENT.md.

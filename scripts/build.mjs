@@ -7,7 +7,8 @@ let html = read("index.html");
 html = html.replace(/<!--pwa[\s\S]*?<!--\/pwa-->\n?/, "");
 html = html.replace('<link rel="stylesheet" href="src/styles.css">', () => `<style>\n${read("src/styles.css")}</style>`);
 // tous les scripts locaux (données, langues, appli, PDF), dans l'ordre de index.html
-html = html.replace(/<script src="(src\/[^"]+\.js)"><\/script>/g, (_, f) => `<script>\n${read(f)}</script>`);
+// sans comptes : l'artifact claude.ai n'a pas d'écran de connexion (config.js vidé)
+html = html.replace(/<script src="(src\/[^"]+\.js)"><\/script>/g, (_, f) => `<script>\n${f === "src/config.js" ? 'const AUTH_CFG={url:"",anon:"",inApp:false};\n' : read(f)}</script>`);
 mkdirSync(new URL("../dist/", import.meta.url), { recursive: true });
 writeFileSync(new URL("../dist/a1-coach.html", import.meta.url), html);
 console.log("dist/a1-coach.html écrit (" + Math.round(html.length / 1024) + " Ko)");

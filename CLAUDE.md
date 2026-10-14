@@ -2,7 +2,7 @@
 
 App web d'entraînement à l'examen **Goethe-Zertifikat A1 : Start Deutsch 1**.
 Questions et consignes en allemand (niveau A1) ; interface et explications dans la langue choisie :
-français (référence), anglais, arabe, Darija en lettres arabes, Darija en lettres latines (arabizi), espagnol, italien.
+français (référence), anglais, arabe, Darija (lettres arabes), espagnol, italien.
 
 ## Structure
 
@@ -11,6 +11,10 @@ index.html          page (en-tête « tableau des départs », jauge, navigation
 src/styles.css      tokens de design + composants (thème clair/sombre, palettes)
 src/data.js         tout le contenu : Q, TEIL, SPEAK, FORMS, WRITE, VOC/WORDS (explications en français)
 src/levels.js       LEVELS : catalogue A1 → C2 et format d'examen de chaque niveau (seul A1 est prêt, voir NIVEAUX.md)
+src/img.js          IMG : dessins au trait originaux en SVG (horloges, prix, dates, ~110 pictos), IMG.word(nom allemand)
+src/config.js       AUTH_CFG : URL + clé publique Supabase (vide = pas de comptes ; voir COMPTES.md)
+src/auth.js         comptes : écran de connexion, inscription, mot de passe oublié, synchro de la progression, suppression
+supabase/schema.sql table progress (RLS) + fonction delete_user()
 src/i18n.js         LANGS, I18N.fr (textes d'interface de référence), t(), tq/tv/tsp/tfm/twr (contenu traduit)
 src/lang/*.js       une langue par fichier : ui + q + v + sp + fm + wr, indexés par identifiants stables
 src/app.js          état, répétition espacée, rendu des onglets, Motion, dictée, Claude (sample),
@@ -33,7 +37,7 @@ NIVEAUX.md              ajouter A2 → C2 ; ABONNEMENT.md : phase 2 (comptes Sup
 
 Pas de framework, pas d'étape de compilation : ouvrir `index.html` dans un navigateur suffit.
 Les scripts sont des scripts classiques qui partagent leurs `const` globales ; l'ordre de chargement compte
-(data → levels → i18n → lang/* → app → pdf). Un fichier de langue ne déclare rien au niveau global (tout dans une IIFE).
+(data → levels → img → i18n → lang/* → config → auth → app → pdf). Un fichier de langue ne déclare rien au niveau global (tout dans une IIFE).
 Bibliothèques par CDN : Motion 12.23.12 (`window.Motion`) et jsPDF 2.5.1 (`window.jspdf`).
 
 ## Format officiel à respecter (règlement Goethe du 1/9/2023)
@@ -70,13 +74,20 @@ Question : `{id, s, p, t, q, fr, x, ...}`
 - Richtig/Falsch : `rf:true|false` à la place de `o`.
 - Lesen Teil 2 : `ab:[annonceA, annonceB]` et `c:0|1`.
 - Support : `audio` (texte lu par la synthèse vocale), `sign` (panneau), `mail` (message).
+- Images : `pics:[jeton, jeton, jeton]` (une par option, même ordre que `o`, donc `pics[0]` = la bonne) pour Hören
+  Teil 1 ; `pic:"jeton"` sur un panneau ou une carte d'oral. Jetons : `clock:14:30`, `price:12,50`, `date:3.5`,
+  `num:17` ou un picto de `IMG.list`. Dessins originaux uniquement : jamais de logo ni de visuel Goethe/telc.
 - `fr` = traduction de la question (bouton Hilfe), `x` = explication courte en français.
 
 Vocabulaire : lignes `article|mot|pluriel|traduction|exemple` dans `VOC[].w`.
 
 Règles de contenu :
+- Banque 2 (identifiants h101+, l101+, g101+) : écrite pour la v1.4 ; ajouter de nouvelles questions avec de
+  nouveaux identifiants, à la fin des tableaux, et des mots à la fin de chaque thème (l'identifiant d'un mot est
+  sa position dans le thème : ne jamais insérer au milieu ni supprimer).
 - Rester strictement au niveau A1 (présent, modaux, vocabulaire du quotidien de la Wortliste Start Deutsch 1).
-- Écrire des textes originaux. Ne jamais recopier les sujets ou le Modellsatz du Goethe-Institut.
+- Écrire des textes originaux. Ne jamais recopier les sujets, Modellsätze ou Übungstests du Goethe-Institut ou de telc,
+  ni les manuels de cours (droits réservés, appli payante). Leur format et leurs thèmes peuvent servir de modèle (RECHERCHE-A1.md).
 - Vérifier qu'il reste assez d'items par partie pour un examen complet (au moins 6/4/5 en Hören, 5/5/5 en Lesen).
 
 ## Design
@@ -137,6 +148,15 @@ Ne jamais cacher un bouton micro, ni rendre une fonction dépendante de la dict�
   via @capacitor/filesystem, raison C617.1). Avant d'ajouter un plugin natif, chercher dans ses sources iOS
   UserDefaults, creationDate/modificationDate, systemUptime, volumeAvailableCapacity, activeInputModes et
   compléter le manifeste, sinon App Store Connect refuse l'envoi (ITMS-91053). La CI iOS vérifie sa présence.
+
+## Comptes (site web)
+
+`AUTH_CFG` vide → aucun écran de connexion (comportement d'origine). Rempli → `authStart()` (fin de app.js)
+affiche `#authGate` avant l'appli, charge supabase-js (CDN sur le site, `vendor/supabase.js` dans l'appli),
+puis fusionne la progression en ligne avec celle de l'appareil (`mergeProgress`). `save()` appelle
+`authQueue()` : envoi 4 s après chaque changement. Jamais de compte dans l'artifact (build.mjs vide config.js),
+ni dans l'appli des stores tant que `inApp` est faux (il faudra alors mettre à jour privacy.html, la fiche
+store et PrivacyInfo.xcprivacy). Tests : `tests/auth.mjs` avec un faux Supabase (`window.A1_AUTH_TEST`).
 
 ## Fonctions liées à claude.ai
 

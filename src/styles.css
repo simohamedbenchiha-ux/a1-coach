@@ -365,3 +365,33 @@ ul.check li.ok::before{content:"✓ ";color:var(--good)}
   .opt,.btn,.tab,.mis,.sw,.chipbtn{transition:none}
   .opt:hover:not(:disabled),.btn:hover:not(:disabled),.tab:hover,.mis:hover,.sw:hover,.chipbtn:hover{transform:none}
 }
+
+/* Écran de connexion (comptes, auth.js) */
+.authGate{position:fixed;inset:0;z-index:60;display:grid;place-items:center;overflow:auto;padding:24px 16px;
+  background:color-mix(in srgb,var(--bg) 62%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.authGate[hidden]{display:none}
+.authCard{width:min(420px,100%);box-sizing:border-box}
+.authBrand{display:flex;align-items:center;gap:10px;font:600 16px var(--ui);color:var(--ink)}
+.authForm{display:grid;gap:12px}
+.fld{display:grid;gap:6px;font:600 14px var(--ui);color:var(--ink)}
+.fld input{width:100%;box-sizing:border-box;font-size:16px}
+.authForm .btn{width:100%}
+.authLinks{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+.linkBtn{background:none;border:0;padding:4px 0;font:600 14px var(--ui);color:var(--brand);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.status.bad,.small.bad{color:var(--bad)}
+.sw.danger{border-color:color-mix(in srgb,var(--bad) 60%,var(--line));color:var(--bad)}
+
+/* Dessins (img.js) : trait en currentColor, suit le thème clair / sombre */
+.pic{display:inline-grid;place-items:center;color:var(--ink)}
+.pic svg{width:64px;height:64px;display:block}
+.pic.big svg{width:96px;height:96px}
+.pic.card svg{width:72px;height:72px}
+.pic.word{display:grid;margin:0 auto -4px}
+.pic.word svg{width:56px;height:56px;opacity:.9}
+.opts.pics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.opt.picOpt{flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;padding:12px 8px}
+.opt.picOpt .pic svg{width:clamp(52px,16vw,80px);height:clamp(52px,16vw,80px)}
+.opt.picOpt .ltr{position:absolute;inset-block-start:8px;inset-inline-start:8px}
+.opt.picOpt{position:relative}
+.sign.withPic{display:flex;align-items:center;gap:14px}
+.sign.withPic>span:last-child{flex:1;min-width:0}

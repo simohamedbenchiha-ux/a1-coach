@@ -20,6 +20,11 @@ const LEVELS=[
   {id:"C1",exam:"Goethe-Zertifikat C1",ready:false,scoring:"modules",pass:60,
    modules:[{s:"L",min:65,parts:["4 Teile"]},{s:"H",min:40,parts:["2 Teile"]},{s:"W",min:80,parts:["2 Teile"]},{s:"S",min:15,parts:["2 Teile"],pair:true}]},
   {id:"C2",exam:"Goethe-Zertifikat C2: GDS",ready:false,scoring:"modules",pass:60,
-   modules:[{s:"L",min:80,parts:["4 Teile"]},{s:"H",min:35,parts:["2 Teile"]},{s:"W",min:80,parts:["2 Teile"]},{s:"S",min:15,parts:["2 Teile"]}]}
+   modules:[{s:"L",min:80,parts:["4 Teile"]},{s:"H",min:35,parts:["2 Teile"]},{s:"W",min:80,parts:["2 Teile"]},{s:"S",min:15,parts:["2 Teile"]}]},
+  /* Examens telc pour la vie en Allemagne (autre format que Start Deutsch 1, voir NIVEAUX.md) */
+  {id:"A1-Z",label:"A1 Zuwanderer",exam:"telc Deutsch A1 für Zuwanderer",ready:false,scoring:"total",pass:60,
+   modules:[{s:"G",min:10,parts:["Sprachbausteine"]},{s:"H",min:15,parts:["Hören","Hören und antworten"]},{s:"L",min:30,parts:["3 Teile"]},{s:"W",min:15,parts:["Formular","Nachricht"]},{s:"S",min:15,parts:["3 Teile"]}]},
+  {id:"DTZ",label:"DTZ",exam:"Deutsch-Test für Zuwanderer (A2–B1)",ready:false,scoring:"dtz",
+   modules:[{s:"H",min:25,parts:["4 Teile"]},{s:"L",min:45,parts:["5 Teile"]},{s:"W",min:30,parts:["Brief"]},{s:"S",min:16,parts:["3 Teile"],pair:true}]}
 ];
 const levelOf=id=>LEVELS.find(l=>l.id===id&&l.ready)||LEVELS[0];

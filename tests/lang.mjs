@@ -28,7 +28,7 @@ for (const [id, dir] of ids) {
   // réglages : sélecteur de langue et de niveau
   await page.evaluate(() => { document.querySelector('.settings').open = true; });
   const lv = await page.evaluate(() => [...document.querySelectorAll('#levels [data-level]')].map(b => [b.dataset.level, b.disabled, b.getAttribute('aria-pressed')]));
-  check(lv.length === 6 && lv[0][0] === 'A1' && !lv[0][1] && lv[0][2] === 'true' && lv.slice(1).every(x => x[1]), `${id} : niveaux A1 actif, A2 → C2 bientôt`);
+  check(lv.length === 8 && lv[0][0] === 'A1' && !lv[0][1] && lv[0][2] === 'true' && lv.slice(1).every(x => x[1]), `${id} : niveaux A1 actif, A2 → C2 bientôt`);
   check(await page.$$eval('#langs [data-lang]', b => b.length) === ids.length, `${id} : ${ids.length} langues proposées`);
   if (id === 'ar') await page.screenshot({ path: `${OUT}/lang-ar-settings.png`, fullPage: false });
   await page.evaluate(() => { document.querySelector('.settings').open = false; });
